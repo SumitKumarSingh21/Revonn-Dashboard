@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -109,7 +108,7 @@ const MessagesTab = () => {
     const channel = supabase
       .channel("messages-changes")
       .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, (payload) => {
-        if (payload.new && selectedBooking === payload.new.booking_id) {
+        if (payload.new && typeof payload.new === 'object' && 'booking_id' in payload.new && selectedBooking === payload.new.booking_id) {
           loadMessages(selectedBooking);
         }
       })
