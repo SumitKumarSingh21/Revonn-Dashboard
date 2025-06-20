@@ -24,7 +24,19 @@ const NotificationsTab = () => {
 
   useEffect(() => {
     loadNotifications();
-    setupRealtimeSubscription();
+  }, []);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("notifications-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, () => {
+        loadNotifications();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const loadNotifications = async () => {
@@ -50,19 +62,6 @@ const NotificationsTab = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const setupRealtimeSubscription = () => {
-    const channel = supabase
-      .channel("notifications-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, () => {
-        loadNotifications();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   };
 
   const markAsRead = async (notificationId: string) => {

@@ -36,7 +36,19 @@ const BookingsTab = () => {
 
   useEffect(() => {
     loadBookings();
-    setupRealtimeSubscription();
+  }, []);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("bookings-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, () => {
+        loadBookings();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const loadBookings = async () => {
@@ -73,19 +85,6 @@ const BookingsTab = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const setupRealtimeSubscription = () => {
-    const channel = supabase
-      .channel("bookings-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, () => {
-        loadBookings();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   };
 
   const updateBookingStatus = async (bookingId: string, status: string) => {

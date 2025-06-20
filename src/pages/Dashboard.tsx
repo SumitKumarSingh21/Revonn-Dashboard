@@ -29,8 +29,30 @@ const Dashboard = () => {
 
   useEffect(() => {
     checkUser();
-    setupRealtimeSubscriptions();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      loadStats(user.id);
+      
+      const channel = supabase
+        .channel("dashboard-updates")
+        .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, () => {
+          loadStats(user.id);
+        })
+        .on("postgres_changes", { event: "*", schema: "public", table: "earnings" }, () => {
+          loadStats(user.id);
+        })
+        .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, () => {
+          loadStats(user.id);
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [user]);
 
   const checkUser = async () => {
     try {
@@ -40,7 +62,6 @@ const Dashboard = () => {
         return;
       }
       setUser(session.user);
-      await loadStats(session.user.id);
     } catch (error) {
       console.error("Error checking user:", error);
       navigate("/auth");
@@ -79,25 +100,6 @@ const Dashboard = () => {
     } catch (error) {
       console.error("Error loading stats:", error);
     }
-  };
-
-  const setupRealtimeSubscriptions = () => {
-    const channel = supabase
-      .channel("dashboard-updates")
-      .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, () => {
-        if (user) loadStats(user.id);
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "earnings" }, () => {
-        if (user) loadStats(user.id);
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, () => {
-        if (user) loadStats(user.id);
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   };
 
   const handleSignOut = async () => {

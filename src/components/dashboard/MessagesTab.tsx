@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -35,13 +36,27 @@ const MessagesTab = () => {
 
   useEffect(() => {
     loadBookings();
-    setupRealtimeSubscription();
   }, []);
 
   useEffect(() => {
     if (selectedBooking) {
       loadMessages(selectedBooking);
     }
+  }, [selectedBooking]);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("messages-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, (payload) => {
+        if (payload.new && typeof payload.new === 'object' && 'booking_id' in payload.new && selectedBooking === payload.new.booking_id) {
+          loadMessages(selectedBooking);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [selectedBooking]);
 
   const loadBookings = async () => {
@@ -102,21 +117,6 @@ const MessagesTab = () => {
         variant: "destructive",
       });
     }
-  };
-
-  const setupRealtimeSubscription = () => {
-    const channel = supabase
-      .channel("messages-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, (payload) => {
-        if (payload.new && typeof payload.new === 'object' && 'booking_id' in payload.new && selectedBooking === payload.new.booking_id) {
-          loadMessages(selectedBooking);
-        }
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   };
 
   const sendMessage = async () => {
