@@ -15,39 +15,57 @@ export type Database = {
           booking_time: string
           car_details: string | null
           created_at: string | null
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
           garage_id: string
           id: string
+          notes: string | null
           payment_method: string | null
           service_id: string
           status: string | null
           total_amount: number | null
           user_id: string
+          vehicle_make: string | null
+          vehicle_model: string | null
         }
         Insert: {
           booking_date: string
           booking_time: string
           car_details?: string | null
           created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
           garage_id: string
           id?: string
+          notes?: string | null
           payment_method?: string | null
           service_id: string
           status?: string | null
           total_amount?: number | null
           user_id: string
+          vehicle_make?: string | null
+          vehicle_model?: string | null
         }
         Update: {
           booking_date?: string
           booking_time?: string
           car_details?: string | null
           created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
           garage_id?: string
           id?: string
+          notes?: string | null
           payment_method?: string | null
           service_id?: string
           status?: string | null
           total_amount?: number | null
           user_id?: string
+          vehicle_make?: string | null
+          vehicle_model?: string | null
         }
         Relationships: [
           {
@@ -66,6 +84,54 @@ export type Database = {
           },
         ]
       }
+      earnings: {
+        Row: {
+          amount: number
+          booking_id: string | null
+          created_at: string | null
+          garage_id: string | null
+          id: string
+          payment_method: string | null
+          status: string | null
+          transaction_date: string | null
+        }
+        Insert: {
+          amount: number
+          booking_id?: string | null
+          created_at?: string | null
+          garage_id?: string | null
+          id?: string
+          payment_method?: string | null
+          status?: string | null
+          transaction_date?: string | null
+        }
+        Update: {
+          amount?: number
+          booking_id?: string | null
+          created_at?: string | null
+          garage_id?: string | null
+          id?: string
+          payment_method?: string | null
+          status?: string | null
+          transaction_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "earnings_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "earnings_garage_id_fkey"
+            columns: ["garage_id"]
+            isOneToOne: false
+            referencedRelation: "garages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       garages: {
         Row: {
           created_at: string | null
@@ -73,10 +139,13 @@ export type Database = {
           image_url: string | null
           location: string | null
           name: string
+          owner_id: string | null
           rating: number | null
           review_count: number | null
           services: string[] | null
+          status: string | null
           updated_at: string | null
+          working_hours: Json | null
         }
         Insert: {
           created_at?: string | null
@@ -84,10 +153,13 @@ export type Database = {
           image_url?: string | null
           location?: string | null
           name: string
+          owner_id?: string | null
           rating?: number | null
           review_count?: number | null
           services?: string[] | null
+          status?: string | null
           updated_at?: string | null
+          working_hours?: Json | null
         }
         Update: {
           created_at?: string | null
@@ -95,10 +167,81 @@ export type Database = {
           image_url?: string | null
           location?: string | null
           name?: string
+          owner_id?: string | null
           rating?: number | null
           review_count?: number | null
           services?: string[] | null
+          status?: string | null
           updated_at?: string | null
+          working_hours?: Json | null
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          booking_id: string | null
+          created_at: string | null
+          id: string
+          message: string
+          sender_id: string | null
+          sender_type: string
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string | null
+          id?: string
+          message: string
+          sender_id?: string | null
+          sender_type: string
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string | null
+          id?: string
+          message?: string
+          sender_id?: string | null
+          sender_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string | null
+          data: Json | null
+          id: string
+          message: string
+          read: boolean | null
+          title: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          message: string
+          read?: boolean | null
+          title: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          message?: string
+          read?: boolean | null
+          title?: string
+          type?: string
+          user_id?: string | null
         }
         Relationships: []
       }
