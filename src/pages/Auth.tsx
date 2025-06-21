@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Car, Mail, Lock, User } from "lucide-react";
+import { Mail, Lock, User } from "lucide-react";
 
 const Auth = () => {
   const [loading, setLoading] = useState(false);
@@ -99,9 +99,13 @@ const Auth = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <Car className="h-12 w-12 text-blue-600" />
+            <img 
+              src="/lovable-uploads/7a2c0481-ceb6-477c-b9ef-b6e8e634b7f9.png" 
+              alt="Revonn Logo" 
+              className="h-12 w-12"
+            />
           </div>
-          <CardTitle className="text-2xl">Garage Control Center</CardTitle>
+          <CardTitle className="text-2xl">Revonn Dashboard</CardTitle>
           <CardDescription>
             Manage your garage operations with real-time updates
           </CardDescription>
