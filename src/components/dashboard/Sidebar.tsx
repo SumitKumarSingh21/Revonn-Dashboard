@@ -13,7 +13,8 @@ import {
   LogOut, 
   Menu, 
   X,
-  Users
+  Users,
+  Bot
 } from "lucide-react";
 
 interface SidebarProps {
@@ -36,6 +37,7 @@ const Sidebar = ({ stats }: SidebarProps) => {
     { icon: DollarSign, label: "Earnings", value: "earnings", count: null },
     { icon: MessageSquare, label: "Messages", value: "messages", count: stats.unreadMessages },
     { icon: Bell, label: "Notifications", value: "notifications", count: null },
+    { icon: Bot, label: "Revvy", value: "revvy", count: null },
   ];
 
   const handleSignOut = async () => {

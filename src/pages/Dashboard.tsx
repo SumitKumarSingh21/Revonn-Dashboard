@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +11,7 @@ import ServicesTab from "@/components/dashboard/ServicesTab";
 import EarningsTab from "@/components/dashboard/EarningsTab";
 import MessagesTab from "@/components/dashboard/MessagesTab";
 import NotificationsTab from "@/components/dashboard/NotificationsTab";
+import RevvyTab from "@/components/dashboard/RevvyTab";
 import Sidebar from "@/components/dashboard/Sidebar";
 import { User } from "@supabase/supabase-js";
 
@@ -204,6 +206,10 @@ const Dashboard = () => {
 
             <TabsContent value="notifications">
               <NotificationsTab />
+            </TabsContent>
+
+            <TabsContent value="revvy">
+              <RevvyTab />
             </TabsContent>
           </Tabs>
         </div>
