@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,13 +11,14 @@ import EarningsTab from "@/components/dashboard/EarningsTab";
 import MessagesTab from "@/components/dashboard/MessagesTab";
 import NotificationsTab from "@/components/dashboard/NotificationsTab";
 import RevvyTab from "@/components/dashboard/RevvyTab";
+import GarageProfileTab from "@/components/dashboard/GarageProfileTab";
 import Sidebar from "@/components/dashboard/Sidebar";
 import { User } from "@supabase/supabase-js";
 
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("bookings");
+  const [activeTab, setActiveTab] = useState("garage-profile");
   const [stats, setStats] = useState({
     totalBookings: 0,
     totalEarnings: 0,
@@ -37,7 +37,7 @@ const Dashboard = () => {
     // Listen for URL changes to update active tab
     const handlePopState = () => {
       const urlParams = new URLSearchParams(window.location.search);
-      const tab = urlParams.get('tab') || 'bookings';
+      const tab = urlParams.get('tab') || 'garage-profile';
       setActiveTab(tab);
     };
 
@@ -45,7 +45,7 @@ const Dashboard = () => {
     
     // Set initial tab from URL
     const urlParams = new URLSearchParams(location.search);
-    const tab = urlParams.get('tab') || 'bookings';
+    const tab = urlParams.get('tab') || 'garage-profile';
     setActiveTab(tab);
 
     return () => {
@@ -57,15 +57,27 @@ const Dashboard = () => {
     if (user) {
       loadStats(user.id);
       
+      // Set up real-time subscriptions for all relevant tables
       const channel = supabase
         .channel("dashboard-updates")
         .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, () => {
+          console.log("Bookings updated");
           loadStats(user.id);
         })
         .on("postgres_changes", { event: "*", schema: "public", table: "earnings" }, () => {
+          console.log("Earnings updated");
           loadStats(user.id);
         })
         .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, () => {
+          console.log("Messages updated");
+          loadStats(user.id);
+        })
+        .on("postgres_changes", { event: "*", schema: "public", table: "services" }, () => {
+          console.log("Services updated");
+          loadStats(user.id);
+        })
+        .on("postgres_changes", { event: "*", schema: "public", table: "garages" }, () => {
+          console.log("Garages updated");
           loadStats(user.id);
         })
         .subscribe();
@@ -188,6 +200,10 @@ const Dashboard = () => {
 
           {/* Tab Content */}
           <Tabs value={activeTab} className="space-y-4">
+            <TabsContent value="garage-profile">
+              <GarageProfileTab user={user!} />
+            </TabsContent>
+
             <TabsContent value="bookings">
               <BookingsTab />
             </TabsContent>

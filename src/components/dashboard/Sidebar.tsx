@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +13,8 @@ import {
   Menu, 
   X,
   Users,
-  Bot
+  Bot,
+  Building2
 } from "lucide-react";
 
 interface SidebarProps {
@@ -32,6 +32,7 @@ const Sidebar = ({ stats }: SidebarProps) => {
   const location = useLocation();
 
   const menuItems = [
+    { icon: Building2, label: "Garage Profile", value: "garage-profile", count: null },
     { icon: Calendar, label: "Bookings", value: "bookings", count: stats.totalBookings },
     { icon: Users, label: "Services", value: "services", count: stats.activeServices },
     { icon: DollarSign, label: "Earnings", value: "earnings", count: null },
@@ -58,7 +59,7 @@ const Sidebar = ({ stats }: SidebarProps) => {
     setIsOpen(false);
   };
 
-  const currentTab = new URLSearchParams(location.search).get('tab') || 'bookings';
+  const currentTab = new URLSearchParams(location.search).get('tab') || 'garage-profile';
 
   return (
     <>
