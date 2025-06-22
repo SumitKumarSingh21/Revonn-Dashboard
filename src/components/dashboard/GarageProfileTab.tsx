@@ -11,6 +11,16 @@ import { Badge } from "@/components/ui/badge";
 import { Upload, Camera, MapPin, Clock, Star } from "lucide-react";
 import { User } from "@supabase/supabase-js";
 
+interface WorkingHours {
+  monday: { start: string; end: string; closed: boolean };
+  tuesday: { start: string; end: string; closed: boolean };
+  wednesday: { start: string; end: string; closed: boolean };
+  thursday: { start: string; end: string; closed: boolean };
+  friday: { start: string; end: string; closed: boolean };
+  saturday: { start: string; end: string; closed: boolean };
+  sunday: { start: string; end: string; closed: boolean };
+}
+
 interface GarageProfile {
   id: string;
   name: string;
@@ -32,23 +42,45 @@ const GarageProfileTab = ({ user }: GarageProfileTabProps) => {
   const [garage, setGarage] = useState<GarageProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  
+  const defaultWorkingHours: WorkingHours = {
+    monday: { start: "09:00", end: "18:00", closed: false },
+    tuesday: { start: "09:00", end: "18:00", closed: false },
+    wednesday: { start: "09:00", end: "18:00", closed: false },
+    thursday: { start: "09:00", end: "18:00", closed: false },
+    friday: { start: "09:00", end: "18:00", closed: false },
+    saturday: { start: "09:00", end: "18:00", closed: false },
+    sunday: { start: "09:00", end: "18:00", closed: true }
+  };
+
   const [formData, setFormData] = useState({
     name: "",
     location: "",
     services: [] as string[],
-    working_hours: {
-      monday: { start: "09:00", end: "18:00", closed: false },
-      tuesday: { start: "09:00", end: "18:00", closed: false },
-      wednesday: { start: "09:00", end: "18:00", closed: false },
-      thursday: { start: "09:00", end: "18:00", closed: false },
-      friday: { start: "09:00", end: "18:00", closed: false },
-      saturday: { start: "09:00", end: "18:00", closed: false },
-      sunday: { start: "09:00", end: "18:00", closed: true }
-    }
+    working_hours: defaultWorkingHours
   });
   const [newService, setNewService] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const { toast } = useToast();
+
+  // Helper function to safely parse working hours
+  const parseWorkingHours = (data: any): WorkingHours => {
+    if (!data || typeof data !== 'object') {
+      return defaultWorkingHours;
+    }
+    
+    // Check if it has the required structure
+    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    const isValidWorkingHours = days.every(day => 
+      data[day] && 
+      typeof data[day] === 'object' &&
+      typeof data[day].start === 'string' &&
+      typeof data[day].end === 'string' &&
+      typeof data[day].closed === 'boolean'
+    );
+
+    return isValidWorkingHours ? data as WorkingHours : defaultWorkingHours;
+  };
 
   useEffect(() => {
     loadGarageProfile();
@@ -69,7 +101,7 @@ const GarageProfileTab = ({ user }: GarageProfileTabProps) => {
             name: payload.new.name || "",
             location: payload.new.location || "",
             services: payload.new.services || [],
-            working_hours: payload.new.working_hours || formData.working_hours
+            working_hours: parseWorkingHours(payload.new.working_hours)
           });
         }
       })
@@ -96,7 +128,7 @@ const GarageProfileTab = ({ user }: GarageProfileTabProps) => {
           name: data.name || "",
           location: data.location || "",
           services: data.services || [],
-          working_hours: data.working_hours || formData.working_hours
+          working_hours: parseWorkingHours(data.working_hours)
         });
       }
     } catch (error) {
