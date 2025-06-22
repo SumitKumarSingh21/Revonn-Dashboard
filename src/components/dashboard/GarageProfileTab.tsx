@@ -5,10 +5,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Upload, Camera, MapPin, Clock, Star } from "lucide-react";
+import { Camera, Star } from "lucide-react";
 import { User } from "@supabase/supabase-js";
 
 interface WorkingHours {
@@ -56,10 +55,8 @@ const GarageProfileTab = ({ user }: GarageProfileTabProps) => {
   const [formData, setFormData] = useState({
     name: "",
     location: "",
-    services: [] as string[],
     working_hours: defaultWorkingHours
   });
-  const [newService, setNewService] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const { toast } = useToast();
 
@@ -96,12 +93,19 @@ const GarageProfileTab = ({ user }: GarageProfileTabProps) => {
       }, (payload) => {
         console.log("Garage profile updated:", payload);
         if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
-          setGarage(payload.new as GarageProfile);
+          const updatedGarage = payload.new as GarageProfile;
+          setGarage(updatedGarage);
           setFormData({
-            name: payload.new.name || "",
-            location: payload.new.location || "",
-            services: payload.new.services || [],
-            working_hours: parseWorkingHours(payload.new.working_hours)
+            name: updatedGarage.name || "",
+            location: updatedGarage.location || "",
+            working_hours: parseWorkingHours(updatedGarage.working_hours)
+          });
+        } else if (payload.eventType === 'DELETE') {
+          setGarage(null);
+          setFormData({
+            name: "",
+            location: "",
+            working_hours: defaultWorkingHours
           });
         }
       })
@@ -127,7 +131,6 @@ const GarageProfileTab = ({ user }: GarageProfileTabProps) => {
         setFormData({
           name: data.name || "",
           location: data.location || "",
-          services: data.services || [],
           working_hours: parseWorkingHours(data.working_hours)
         });
       }
@@ -177,13 +180,17 @@ const GarageProfileTab = ({ user }: GarageProfileTabProps) => {
       
       if (imageFile) {
         imageUrl = await handleImageUpload(imageFile);
+        if (!imageUrl) {
+          setSaving(false);
+          return;
+        }
       }
 
       const garageData = {
         name: formData.name,
         location: formData.location,
-        services: formData.services,
-        working_hours: formData.working_hours as any, // Cast to any to match Json type
+        services: garage?.services || [],
+        working_hours: formData.working_hours as any,
         image_url: imageUrl,
         owner_id: user.id,
         status: 'active',
@@ -227,23 +234,6 @@ const GarageProfileTab = ({ user }: GarageProfileTabProps) => {
     } finally {
       setSaving(false);
     }
-  };
-
-  const addService = () => {
-    if (newService.trim() && !formData.services.includes(newService.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        services: [...prev.services, newService.trim()]
-      }));
-      setNewService("");
-    }
-  };
-
-  const removeService = (service: string) => {
-    setFormData(prev => ({
-      ...prev,
-      services: prev.services.filter(s => s !== service)
-    }));
   };
 
   if (loading) {
@@ -306,27 +296,6 @@ const GarageProfileTab = ({ user }: GarageProfileTabProps) => {
                 onChange={(e) => setImageFile(e.target.files?.[0] || null)}
                 className="max-w-xs"
               />
-            </div>
-          </div>
-
-          {/* Services */}
-          <div className="space-y-4">
-            <Label>Services Offered</Label>
-            <div className="flex gap-2">
-              <Input
-                value={newService}
-                onChange={(e) => setNewService(e.target.value)}
-                placeholder="Add a service"
-                onKeyPress={(e) => e.key === 'Enter' && addService()}
-              />
-              <Button onClick={addService} variant="outline">Add</Button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {formData.services.map((service, index) => (
-                <Badge key={index} variant="secondary" className="cursor-pointer" onClick={() => removeService(service)}>
-                  {service} ×
-                </Badge>
-              ))}
             </div>
           </div>
 
