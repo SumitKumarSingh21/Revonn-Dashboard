@@ -183,7 +183,7 @@ const GarageProfileTab = ({ user }: GarageProfileTabProps) => {
         name: formData.name,
         location: formData.location,
         services: formData.services,
-        working_hours: formData.working_hours,
+        working_hours: formData.working_hours as any, // Cast to any to match Json type
         image_url: imageUrl,
         owner_id: user.id,
         status: 'active',
@@ -203,7 +203,7 @@ const GarageProfileTab = ({ user }: GarageProfileTabProps) => {
         // Create new garage
         const { data, error } = await supabase
           .from("garages")
-          .insert([garageData])
+          .insert(garageData)
           .select()
           .single();
 
