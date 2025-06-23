@@ -1,14 +1,15 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Calendar, Users, MessageSquare } from "lucide-react";
+import { IndianRupee, Calendar, Users, Star } from "lucide-react";
 import BookingsTab from "@/components/dashboard/BookingsTab";
 import ServicesTab from "@/components/dashboard/ServicesTab";
 import EarningsTab from "@/components/dashboard/EarningsTab";
-import MessagesTab from "@/components/dashboard/MessagesTab";
+import ReviewsTab from "@/components/dashboard/ReviewsTab";
 import NotificationsTab from "@/components/dashboard/NotificationsTab";
 import RevvyTab from "@/components/dashboard/RevvyTab";
 import GarageProfileTab from "@/components/dashboard/GarageProfileTab";
@@ -23,7 +24,7 @@ const Dashboard = () => {
     totalBookings: 0,
     totalEarnings: 0,
     activeServices: 0,
-    unreadMessages: 0,
+    totalReviews: 0,
   });
   const navigate = useNavigate();
   const location = useLocation();
@@ -116,11 +117,11 @@ const Dashboard = () => {
       if (!garage) return;
 
       // Load statistics
-      const [bookingsResult, earningsResult, servicesResult, messagesResult] = await Promise.all([
+      const [bookingsResult, earningsResult, servicesResult, reviewsResult] = await Promise.all([
         supabase.from("bookings").select("id", { count: "exact" }).eq("garage_id", garage.id),
         supabase.from("earnings").select("amount").eq("garage_id", garage.id),
         supabase.from("services").select("id", { count: "exact" }).eq("garage_id", garage.id),
-        supabase.from("messages").select("id", { count: "exact" }).eq("sender_type", "customer")
+        supabase.from("reviews").select("id", { count: "exact" }).eq("garage_id", garage.id)
       ]);
 
       const totalEarnings = earningsResult.data?.reduce((sum, earning) => sum + Number(earning.amount), 0) || 0;
@@ -129,7 +130,7 @@ const Dashboard = () => {
         totalBookings: bookingsResult.count || 0,
         totalEarnings,
         activeServices: servicesResult.count || 0,
-        unreadMessages: messagesResult.count || 0,
+        totalReviews: reviewsResult.count || 0,
       });
     } catch (error) {
       console.error("Error loading stats:", error);
@@ -167,10 +168,10 @@ const Dashboard = () => {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Earnings</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <IndianRupee className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${stats.totalEarnings.toFixed(2)}</div>
+                <div className="text-2xl font-bold">₹{stats.totalEarnings.toFixed(2)}</div>
                 <p className="text-xs text-muted-foreground">Total revenue</p>
               </CardContent>
             </Card>
@@ -188,12 +189,12 @@ const Dashboard = () => {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Unread Messages</CardTitle>
-                <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Total Reviews</CardTitle>
+                <Star className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.unreadMessages}</div>
-                <p className="text-xs text-muted-foreground">Customer messages</p>
+                <div className="text-2xl font-bold">{stats.totalReviews}</div>
+                <p className="text-xs text-muted-foreground">Customer reviews</p>
               </CardContent>
             </Card>
           </div>
@@ -216,8 +217,8 @@ const Dashboard = () => {
               <EarningsTab />
             </TabsContent>
 
-            <TabsContent value="messages">
-              <MessagesTab />
+            <TabsContent value="reviews">
+              <ReviewsTab />
             </TabsContent>
 
             <TabsContent value="notifications">

@@ -211,6 +211,7 @@ export type Database = {
       }
       garages: {
         Row: {
+          average_rating: number | null
           created_at: string | null
           id: string
           image_url: string | null
@@ -221,10 +222,12 @@ export type Database = {
           review_count: number | null
           services: string[] | null
           status: string | null
+          total_reviews: number | null
           updated_at: string | null
           working_hours: Json | null
         }
         Insert: {
+          average_rating?: number | null
           created_at?: string | null
           id?: string
           image_url?: string | null
@@ -235,10 +238,12 @@ export type Database = {
           review_count?: number | null
           services?: string[] | null
           status?: string | null
+          total_reviews?: number | null
           updated_at?: string | null
           working_hours?: Json | null
         }
         Update: {
+          average_rating?: number | null
           created_at?: string | null
           id?: string
           image_url?: string | null
@@ -249,6 +254,7 @@ export type Database = {
           review_count?: number | null
           services?: string[] | null
           status?: string | null
+          total_reviews?: number | null
           updated_at?: string | null
           working_hours?: Json | null
         }
@@ -388,6 +394,39 @@ export type Database = {
           id?: string
           updated_at?: string | null
           username?: string | null
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          booking_id: string
+          comment: string | null
+          created_at: string
+          garage_id: string
+          id: string
+          rating: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          booking_id: string
+          comment?: string | null
+          created_at?: string
+          garage_id: string
+          id?: string
+          rating: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          booking_id?: string
+          comment?: string | null
+          created_at?: string
+          garage_id?: string
+          id?: string
+          rating?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

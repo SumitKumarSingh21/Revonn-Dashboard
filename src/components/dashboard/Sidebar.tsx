@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   Calendar, 
-  DollarSign, 
-  MessageSquare, 
+  IndianRupee, 
+  Star, 
   Bell, 
   Settings, 
   LogOut, 
@@ -22,7 +23,7 @@ interface SidebarProps {
     totalBookings: number;
     totalEarnings: number;
     activeServices: number;
-    unreadMessages: number;
+    totalReviews: number;
   };
 }
 
@@ -35,8 +36,8 @@ const Sidebar = ({ stats }: SidebarProps) => {
     { icon: Building2, label: "Garage Profile", value: "garage-profile", count: null },
     { icon: Calendar, label: "Bookings", value: "bookings", count: stats.totalBookings },
     { icon: Users, label: "Services", value: "services", count: stats.activeServices },
-    { icon: DollarSign, label: "Earnings", value: "earnings", count: null },
-    { icon: MessageSquare, label: "Messages", value: "messages", count: stats.unreadMessages },
+    { icon: IndianRupee, label: "Earnings", value: "earnings", count: null },
+    { icon: Star, label: "Reviews", value: "reviews", count: stats.totalReviews },
     { icon: Bell, label: "Notifications", value: "notifications", count: null },
     { icon: Bot, label: "Revvy", value: "revvy", count: null },
   ];
