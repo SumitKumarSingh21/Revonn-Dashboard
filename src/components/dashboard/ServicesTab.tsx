@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Edit, Trash2, Clock, DollarSign } from "lucide-react";
+import { Plus, Edit, Trash2, Clock, DollarSign, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Service {
   id: string;
@@ -19,9 +20,16 @@ interface Service {
   category: string | null;
 }
 
+interface Garage {
+  id: string;
+  name: string;
+}
+
 const ServicesTab = () => {
   const [services, setServices] = useState<Service[]>([]);
+  const [garage, setGarage] = useState<Garage | null>(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [formData, setFormData] = useState({
@@ -34,35 +42,64 @@ const ServicesTab = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    loadServices();
+    loadGarageAndServices();
   }, []);
 
-  const loadServices = async () => {
+  const loadGarageAndServices = async () => {
     try {
       const { data: user } = await supabase.auth.getUser();
-      if (!user.user) return;
+      if (!user.user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to manage services",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      const { data: garage } = await supabase
+      console.log("Loading garage for user:", user.user.id);
+
+      // First, get the user's garage
+      const { data: garageData, error: garageError } = await supabase
         .from("garages")
-        .select("id")
+        .select("id, name")
         .eq("owner_id", user.user.id)
-        .single();
+        .maybeSingle();
 
-      if (!garage) return;
+      if (garageError) {
+        console.error("Error loading garage:", garageError);
+        throw garageError;
+      }
 
-      const { data, error } = await supabase
+      if (!garageData) {
+        console.log("No garage found for user");
+        setGarage(null);
+        setServices([]);
+        return;
+      }
+
+      console.log("Garage found:", garageData);
+      setGarage(garageData);
+
+      // Now load services for this garage
+      const { data: servicesData, error: servicesError } = await supabase
         .from("services")
         .select("*")
-        .eq("garage_id", garage.id)
+        .eq("garage_id", garageData.id)
         .order("name");
 
-      if (error) throw error;
-      setServices(data || []);
+      if (servicesError) {
+        console.error("Error loading services:", servicesError);
+        throw servicesError;
+      }
+
+      console.log("Services loaded:", servicesData);
+      setServices(servicesData || []);
     } catch (error) {
-      console.error("Error loading services:", error);
+      console.error("Error in loadGarageAndServices:", error);
       toast({
         title: "Error",
-        description: "Failed to load services",
+        description: "Failed to load garage and services",
         variant: "destructive",
       });
     } finally {
@@ -73,40 +110,56 @@ const ServicesTab = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!garage) {
+      toast({
+        title: "No Garage Found",
+        description: "Please create a garage profile first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.name.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Service name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSaving(true);
+    
     try {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) return;
-
-      const { data: garage } = await supabase
-        .from("garages")
-        .select("id")
-        .eq("owner_id", user.user.id)
-        .single();
-
-      if (!garage) return;
-
       const serviceData = {
-        name: formData.name,
-        description: formData.description || null,
+        name: formData.name.trim(),
+        description: formData.description.trim() || null,
         price: formData.price ? parseFloat(formData.price) : null,
         duration: formData.duration ? parseInt(formData.duration) : null,
-        category: formData.category || null,
+        category: formData.category.trim() || null,
         garage_id: garage.id,
       };
 
+      console.log("Saving service data:", serviceData);
+
       let error;
       if (editingService) {
-        ({ error } = await supabase
+        const { error: updateError } = await supabase
           .from("services")
           .update(serviceData)
-          .eq("id", editingService.id));
+          .eq("id", editingService.id);
+        error = updateError;
       } else {
-        ({ error } = await supabase
+        const { error: insertError } = await supabase
           .from("services")
-          .insert([serviceData]));
+          .insert([serviceData]);
+        error = insertError;
       }
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error saving service:", error);
+        throw error;
+      }
 
       toast({
         title: "Success",
@@ -116,14 +169,16 @@ const ServicesTab = () => {
       setDialogOpen(false);
       setEditingService(null);
       setFormData({ name: "", description: "", price: "", duration: "", category: "" });
-      loadServices();
+      loadGarageAndServices();
     } catch (error) {
       console.error("Error saving service:", error);
       toast({
         title: "Error",
-        description: "Failed to save service",
+        description: `Failed to ${editingService ? "update" : "create"} service`,
         variant: "destructive",
       });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -140,6 +195,10 @@ const ServicesTab = () => {
   };
 
   const handleDelete = async (serviceId: string) => {
+    if (!confirm("Are you sure you want to delete this service?")) {
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from("services")
@@ -153,7 +212,7 @@ const ServicesTab = () => {
         description: "Service deleted successfully",
       });
 
-      loadServices();
+      loadGarageAndServices();
     } catch (error) {
       console.error("Error deleting service:", error);
       toast({
@@ -172,12 +231,32 @@ const ServicesTab = () => {
     );
   }
 
+  // Show message if no garage exists
+  if (!garage) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold">Services</h2>
+          <p className="text-gray-600">Manage your garage services and pricing</p>
+        </div>
+        
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            You need to create a garage profile first before you can add services. 
+            Please go to the Garage Profile tab and complete your garage setup.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold">Services</h2>
-          <p className="text-gray-600">Manage your garage services and pricing</p>
+          <p className="text-gray-600">Manage services for {garage.name}</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
@@ -198,11 +277,12 @@ const ServicesTab = () => {
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="name">Service Name</Label>
+                <Label htmlFor="name">Service Name *</Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="e.g., Oil Change, Brake Inspection"
                   required
                 />
               </div>
@@ -222,6 +302,7 @@ const ServicesTab = () => {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Describe the service..."
+                  rows={3}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -231,6 +312,7 @@ const ServicesTab = () => {
                     id="price"
                     type="number"
                     step="0.01"
+                    min="0"
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                     placeholder="0.00"
@@ -241,6 +323,7 @@ const ServicesTab = () => {
                   <Input
                     id="duration"
                     type="number"
+                    min="1"
                     value={formData.duration}
                     onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
                     placeholder="60"
@@ -248,11 +331,16 @@ const ServicesTab = () => {
                 </div>
               </div>
               <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setDialogOpen(false)}
+                  disabled={saving}
+                >
                   Cancel
                 </Button>
-                <Button type="submit">
-                  {editingService ? "Update" : "Create"} Service
+                <Button type="submit" disabled={saving}>
+                  {saving ? "Saving..." : editingService ? "Update Service" : "Create Service"}
                 </Button>
               </div>
             </form>
@@ -312,7 +400,7 @@ const ServicesTab = () => {
           <CardContent className="text-center py-8">
             <Plus className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No services yet</h3>
-            <p className="text-gray-500 mb-4">Create your first service to get started</p>
+            <p className="text-gray-500 mb-4">Create your first service for {garage.name}</p>
             <Button onClick={() => setDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Add Service
