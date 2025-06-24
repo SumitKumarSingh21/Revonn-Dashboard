@@ -15,7 +15,7 @@ interface Review {
   user_id: string;
   booking_id: string;
   garage_id: string;
-  bookings: {
+  bookings?: {
     customer_name: string | null;
     service_id: string;
     services: {
@@ -72,26 +72,47 @@ const ReviewsTab = () => {
         return;
       }
 
-      const { data, error } = await supabase
+      // First get reviews for this garage
+      const { data: reviewsData, error: reviewsError } = await supabase
         .from("reviews")
-        .select(`
-          *,
-          bookings (
-            customer_name,
-            service_id,
-            services (name)
-          )
-        `)
+        .select("*")
         .eq("garage_id", garage.id)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (reviewsError) throw reviewsError;
 
-      // Filter out any reviews with invalid data
-      const validReviews = (data || []).filter(review => review.bookings !== null);
+      // Then get booking details for each review separately
+      const reviewsWithBookings: Review[] = [];
       
-      setReviews(validReviews);
-      calculateStats(validReviews);
+      if (reviewsData) {
+        for (const review of reviewsData) {
+          let bookingData = null;
+          
+          try {
+            const { data: booking } = await supabase
+              .from("bookings")
+              .select(`
+                customer_name,
+                service_id,
+                services (name)
+              `)
+              .eq("id", review.booking_id)
+              .single();
+            
+            bookingData = booking;
+          } catch (error) {
+            console.log("Could not fetch booking data for review:", review.id);
+          }
+
+          reviewsWithBookings.push({
+            ...review,
+            bookings: bookingData
+          });
+        }
+      }
+      
+      setReviews(reviewsWithBookings);
+      calculateStats(reviewsWithBookings);
     } catch (error) {
       console.error("Error loading reviews:", error);
       toast({
