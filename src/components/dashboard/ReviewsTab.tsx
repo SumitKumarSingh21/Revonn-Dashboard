@@ -14,6 +14,7 @@ interface Review {
   created_at: string;
   user_id: string;
   booking_id: string;
+  garage_id: string;
   bookings: {
     customer_name: string | null;
     service_id: string;
@@ -86,8 +87,11 @@ const ReviewsTab = () => {
 
       if (error) throw error;
 
-      setReviews(data || []);
-      calculateStats(data || []);
+      // Filter out any reviews with invalid data
+      const validReviews = (data || []).filter(review => review.bookings !== null);
+      
+      setReviews(validReviews);
+      calculateStats(validReviews);
     } catch (error) {
       console.error("Error loading reviews:", error);
       toast({

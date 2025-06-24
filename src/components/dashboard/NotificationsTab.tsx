@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Check, Trash2, Calendar, MessageSquare, DollarSign, AlertCircle } from "lucide-react";
+import { Bell, Check, Trash2, Calendar, MessageSquare, DollarSign, AlertCircle, Star } from "lucide-react";
 
 interface Notification {
   id: string;
@@ -29,7 +29,16 @@ const NotificationsTab = () => {
   useEffect(() => {
     const channel = supabase
       .channel("notifications-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, () => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, (payload) => {
+        console.log("Notification change:", payload);
+        if (payload.eventType === 'INSERT') {
+          // Show toast for new notifications
+          const newNotification = payload.new as Notification;
+          toast({
+            title: newNotification.title,
+            description: newNotification.message,
+          });
+        }
         loadNotifications();
       })
       .subscribe();
@@ -37,7 +46,7 @@ const NotificationsTab = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [toast]);
 
   const loadNotifications = async () => {
     try {
@@ -152,6 +161,8 @@ const NotificationsTab = () => {
         return <MessageSquare className="h-5 w-5 text-green-600" />;
       case "payment":
         return <DollarSign className="h-5 w-5 text-yellow-600" />;
+      case "review":
+        return <Star className="h-5 w-5 text-purple-600" />;
       default:
         return <AlertCircle className="h-5 w-5 text-gray-600" />;
     }
@@ -165,6 +176,8 @@ const NotificationsTab = () => {
         return "bg-green-100 text-green-800";
       case "payment":
         return "bg-yellow-100 text-yellow-800";
+      case "review":
+        return "bg-purple-100 text-purple-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -263,7 +276,7 @@ const NotificationsTab = () => {
           <CardContent className="text-center py-8">
             <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No notifications yet</h3>
-            <p className="text-gray-500">You'll receive notifications about bookings, messages, and payments here</p>
+            <p className="text-gray-500">You'll receive notifications about bookings, messages, reviews, and payments here</p>
           </CardContent>
         </Card>
       )}
