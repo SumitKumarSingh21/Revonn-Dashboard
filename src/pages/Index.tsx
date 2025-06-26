@@ -30,9 +30,14 @@ const Index = () => {
               <Car className="h-8 w-8 text-blue-600 mr-3" />
               <h1 className="text-xl font-bold text-gray-900">Garage Flow Control Center</h1>
             </div>
-            <Button onClick={() => navigate("/auth")}>
-              Get Started
-            </Button>
+            <div className="flex space-x-4">
+              <Button variant="outline" onClick={() => navigate("/services")}>
+                Browse Services
+              </Button>
+              <Button onClick={() => navigate("/auth")}>
+                Get Started
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -56,8 +61,8 @@ const Index = () => {
               <Button size="lg" onClick={() => navigate("/auth")} className="text-lg px-8 py-3">
                 Start Managing Today
               </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8 py-3">
-                View Demo
+              <Button size="lg" variant="outline" className="text-lg px-8 py-3" onClick={() => navigate("/services")}>
+                Browse Services
               </Button>
             </div>
           </div>
@@ -205,6 +210,14 @@ const Index = () => {
               className="text-lg px-8 py-3"
             >
               Get Started for Free
+            </Button>
+            <Button 
+              size="lg" 
+              variant="outline" 
+              onClick={() => navigate("/services")}
+              className="text-lg px-8 py-3 bg-transparent border-white text-white hover:bg-white hover:text-blue-600"
+            >
+              Find Services Near You
             </Button>
           </div>
         </div>
