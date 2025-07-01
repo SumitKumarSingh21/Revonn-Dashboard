@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,8 +26,11 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <Car className="h-8 w-8 text-blue-600 mr-3" />
-              <h1 className="text-xl font-bold text-gray-900">Garage Flow Control Center</h1>
+              <img src="/lovable-uploads/f2edf4d2-fb05-49d3-bf90-027c5a657e2a.png" alt="Revonn Logo" className="h-10 w-10 mr-3" />
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">Revonn</h1>
+                <p className="text-xs text-gray-600">Beyond Class</p>
+              </div>
             </div>
             <div className="flex space-x-4">
               <Button variant="outline" onClick={() => navigate("/services")}>
@@ -46,12 +48,12 @@ const Index = () => {
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <div className="mb-8">
-            <div className="inline-flex items-center justify-center p-2 bg-blue-100 rounded-full mb-4">
-              <Car className="h-12 w-12 text-blue-600" />
+            <div className="inline-flex items-center justify-center p-2 bg-red-100 rounded-full mb-4">
+              <img src="/lovable-uploads/f2edf4d2-fb05-49d3-bf90-027c5a657e2a.png" alt="Revonn Logo" className="h-12 w-12" />
             </div>
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-              Manage Your Garage
-              <span className="text-blue-600 block">Like Never Before</span>
+              Welcome to Revonn
+              <span className="text-red-600 block">Beyond Class</span>
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
               Complete garage management solution with real-time updates, customer communication, 

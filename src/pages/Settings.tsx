@@ -7,175 +7,106 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, User, Lock, Shield, Bell, AlertTriangle } from "lucide-react";
-import { User as SupabaseUser } from "@supabase/supabase-js";
-
-interface UserProfile {
-  id: string;
-  full_name: string | null;
-  username: string | null;
-  avatar_url: string | null;
-  bio: string | null;
-}
-
-interface PrivacySettings {
-  account_visibility: boolean;
-  show_dashboard_activity: boolean;
-}
-
-interface NotificationPreferences {
-  bookings: boolean;
-  account_changes: boolean;
-  service_updates: boolean;
-  messages: boolean;
-}
+import { ArrowLeft, User, Bell, Shield, Palette, Database } from "lucide-react";
 
 const Settings = () => {
-  const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  
-  // Form states
-  const [fullName, setFullName] = useState("");
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState("");
-  
-  // Password change
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  
-  // Privacy settings
-  const [privacySettings, setPrivacySettings] = useState<PrivacySettings>({
-    account_visibility: true,
-    show_dashboard_activity: true,
+  const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState({
+    full_name: "",
+    username: "",
+    bio: "",
+    phone: "",
+    location: ""
+  });
+  const [notifications, setNotifications] = useState({
+    email_notifications: true,
+    push_notifications: true,
+    booking_notifications: true,
+    payment_notifications: true,
+    review_notifications: true
+  });
+  const [preferences, setPreferences] = useState({
+    theme: "light",
+    language: "en",
+    timezone: "UTC"
   });
   
-  // Notification preferences
-  const [notificationPrefs, setNotificationPrefs] = useState<NotificationPreferences>({
-    bookings: true,
-    account_changes: true,
-    service_updates: true,
-    messages: true,
-  });
-
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    loadUserData();
-    setupRealtimeSubscription();
+    checkUser();
   }, []);
 
-  const setupRealtimeSubscription = () => {
-    const channel = supabase
-      .channel("settings-updates")
-      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, (payload) => {
-        if (payload.new && typeof payload.new === 'object' && 'id' in payload.new) {
-          loadUserData();
-        }
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  };
-
-  const loadUserData = async () => {
+  const checkUser = async () => {
     try {
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      if (!currentUser) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
         navigate("/auth");
         return;
       }
-
-      setUser(currentUser);
-      setEmail(currentUser.email || "");
-      setPhone(currentUser.phone || "");
-
-      // Load profile
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", currentUser.id)
-        .single();
-
-      if (profileData) {
-        setProfile(profileData);
-        setFullName(profileData.full_name || "");
-        setUsername(profileData.username || "");
-        setAvatarUrl(profileData.avatar_url || "");
-      }
-
-      // Load privacy settings (stored in user metadata)
-      const metadata = currentUser.user_metadata || {};
-      setPrivacySettings({
-        account_visibility: metadata.account_visibility !== false,
-        show_dashboard_activity: metadata.show_dashboard_activity !== false,
-      });
-
-      // Load notification preferences
-      setNotificationPrefs({
-        bookings: metadata.notifications_bookings !== false,
-        account_changes: metadata.notifications_account_changes !== false,
-        service_updates: metadata.notifications_service_updates !== false,
-        messages: metadata.notifications_messages !== false,
-      });
-
+      setUser(session.user);
+      await loadProfile(session.user.id);
     } catch (error) {
-      console.error("Error loading user data:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load user settings",
-        variant: "destructive",
-      });
+      console.error("Error checking user:", error);
+      navigate("/auth");
     } finally {
       setLoading(false);
     }
   };
 
-  const updateProfile = async () => {
+  const loadProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      if (data) {
+        setProfile({
+          full_name: data.full_name || "",
+          username: data.username || "",
+          bio: data.bio || "",
+          phone: data.phone || "",
+          location: data.location || ""
+        });
+      }
+    } catch (error) {
+      console.error("Error loading profile:", error);
+    }
+  };
+
+  const saveProfile = async () => {
     if (!user) return;
     
     setSaving(true);
     try {
-      // Update profile
-      const { error: profileError } = await supabase
+      const { error } = await supabase
         .from("profiles")
         .upsert({
           id: user.id,
-          full_name: fullName,
-          username: username,
-          avatar_url: avatarUrl,
-          updated_at: new Date().toISOString(),
+          ...profile,
+          updated_at: new Date().toISOString()
         });
 
-      if (profileError) throw profileError;
-
-      // Update auth user metadata
-      const { error: authError } = await supabase.auth.updateUser({
-        data: {
-          full_name: fullName,
-          username: username,
-          avatar_url: avatarUrl,
-        }
-      });
-
-      if (authError) throw authError;
+      if (error) throw error;
 
       toast({
         title: "Success",
         description: "Profile updated successfully",
       });
-
     } catch (error) {
-      console.error("Error updating profile:", error);
+      console.error("Error saving profile:", error);
       toast({
         title: "Error",
         description: "Failed to update profile",
@@ -186,179 +117,16 @@ const Settings = () => {
     }
   };
 
-  const changePassword = async () => {
-    if (!newPassword || newPassword !== confirmPassword) {
-      toast({
-        title: "Error",
-        description: "New passwords do not match",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (newPassword.length < 8) {
-      toast({
-        title: "Error",
-        description: "Password must be at least 8 characters long",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setSaving(true);
+  const handleSignOut = async () => {
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      });
-
+      const { error } = await supabase.auth.signOut();
       if (error) throw error;
-
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-
-      toast({
-        title: "Success",
-        description: "Password updated successfully",
-      });
-
+      navigate("/");
     } catch (error) {
-      console.error("Error changing password:", error);
+      console.error("Error signing out:", error);
       toast({
         title: "Error",
-        description: "Failed to change password",
-        variant: "destructive",
-      });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const updatePrivacySettings = async (newSettings: Partial<PrivacySettings>) => {
-    if (!user) return;
-
-    const updatedSettings = { ...privacySettings, ...newSettings };
-    setPrivacySettings(updatedSettings);
-
-    try {
-      const { error } = await supabase.auth.updateUser({
-        data: {
-          account_visibility: updatedSettings.account_visibility,
-          show_dashboard_activity: updatedSettings.show_dashboard_activity,
-        }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Privacy settings updated",
-      });
-
-    } catch (error) {
-      console.error("Error updating privacy settings:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update privacy settings",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const updateNotificationPrefs = async (newPrefs: Partial<NotificationPreferences>) => {
-    if (!user) return;
-
-    const updatedPrefs = { ...notificationPrefs, ...newPrefs };
-    setNotificationPrefs(updatedPrefs);
-
-    try {
-      const { error } = await supabase.auth.updateUser({
-        data: {
-          notifications_bookings: updatedPrefs.bookings,
-          notifications_account_changes: updatedPrefs.account_changes,
-          notifications_service_updates: updatedPrefs.service_updates,
-          notifications_messages: updatedPrefs.messages,
-        }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Notification preferences updated",
-      });
-
-    } catch (error) {
-      console.error("Error updating notification preferences:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update notification preferences",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const deactivateAccount = async () => {
-    if (!confirm("Are you sure you want to deactivate your account? This action can be reversed.")) {
-      return;
-    }
-
-    try {
-      const { error } = await supabase.auth.updateUser({
-        data: { account_deactivated: true }
-      });
-
-      if (error) throw error;
-
-      await supabase.auth.signOut();
-      navigate("/auth");
-
-      toast({
-        title: "Account Deactivated",
-        description: "Your account has been deactivated",
-      });
-
-    } catch (error) {
-      console.error("Error deactivating account:", error);
-      toast({
-        title: "Error",
-        description: "Failed to deactivate account",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const deleteAccount = async () => {
-    if (!confirm("Are you sure you want to permanently delete your account? This action cannot be undone.")) {
-      return;
-    }
-
-    if (!confirm("This will permanently delete all your data. Are you absolutely sure?")) {
-      return;
-    }
-
-    try {
-      // Note: Account deletion should be handled by an edge function for security
-      // For now, we'll mark the account for deletion
-      const { error } = await supabase.auth.updateUser({
-        data: { account_marked_for_deletion: true }
-      });
-
-      if (error) throw error;
-
-      await supabase.auth.signOut();
-      navigate("/auth");
-
-      toast({
-        title: "Account Deletion Requested",
-        description: "Your account has been marked for deletion and will be processed within 24 hours",
-      });
-
-    } catch (error) {
-      console.error("Error deleting account:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete account",
+        description: "Failed to sign out",
         variant: "destructive",
       });
     }
@@ -374,265 +142,204 @@ const Settings = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto p-6">
-        {/* Header */}
-        <div className="flex items-center mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/dashboard")}
-            className="mr-4"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-3xl font-bold">Settings</h1>
+      {/* Header */}
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/dashboard")}
+                className="mr-4"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Dashboard
+              </Button>
+              <div className="flex items-center">
+                <img src="/lovable-uploads/f2edf4d2-fb05-49d3-bf90-027c5a657e2a.png" alt="Revonn Logo" className="h-8 w-8 mr-3" />
+                <div>
+                  <h1 className="text-lg font-semibold">Settings</h1>
+                  <p className="text-sm text-gray-600">Manage your account and preferences</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <div className="space-y-6">
-          {/* Edit Profile */}
+      <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="space-y-8">
+          {/* Profile Settings */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
+              <div className="flex items-center">
                 <User className="h-5 w-5 mr-2" />
-                Edit Profile
-              </CardTitle>
+                <CardTitle>Profile Information</CardTitle>
+              </div>
               <CardDescription>
-                Update your personal information and profile settings
+                Update your personal information and profile details
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="fullName">Full Name</Label>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="full_name">Full Name</Label>
                   <Input
-                    id="fullName"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
+                    id="full_name"
+                    value={profile.full_name}
+                    onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
                     placeholder="Enter your full name"
                   />
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="username">Username</Label>
                   <Input
                     id="username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    value={profile.username}
+                    onChange={(e) => setProfile({ ...profile, username: e.target.value })}
                     placeholder="Enter your username"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    disabled
-                    className="bg-gray-50"
-                  />
-                </div>
-                <div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="bio">Bio</Label>
+                <Textarea
+                  id="bio"
+                  value={profile.bio}
+                  onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                  placeholder="Tell us about yourself"
+                  rows={3}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number</Label>
                   <Input
                     id="phone"
-                    value={phone}
-                    disabled
-                    className="bg-gray-50"
-                    placeholder="Phone number"
+                    value={profile.phone}
+                    onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                    placeholder="Enter your phone number"
+                    type="tel"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="location">Location</Label>
+                  <Input
+                    id="location"
+                    value={profile.location}
+                    onChange={(e) => setProfile({ ...profile, location: e.target.value })}
+                    placeholder="Enter your location"
                   />
                 </div>
               </div>
-              <div>
-                <Label htmlFor="avatarUrl">Profile Picture URL</Label>
-                <Input
-                  id="avatarUrl"
-                  value={avatarUrl}
-                  onChange={(e) => setAvatarUrl(e.target.value)}
-                  placeholder="Enter image URL"
-                />
-              </div>
-              <Button onClick={updateProfile} disabled={saving}>
-                {saving ? "Saving..." : "Update Profile"}
+
+              <Button onClick={saveProfile} disabled={saving} className="w-full md:w-auto">
+                {saving ? "Saving..." : "Save Profile"}
               </Button>
             </CardContent>
           </Card>
 
-          {/* Change Password */}
+          {/* Notification Settings */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Lock className="h-5 w-5 mr-2" />
-                Change Password
-              </CardTitle>
-              <CardDescription>
-                Update your account password for security
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="currentPassword">Current Password</Label>
-                <Input
-                  id="currentPassword"
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="Enter current password"
-                />
-              </div>
-              <div>
-                <Label htmlFor="newPassword">New Password</Label>
-                <Input
-                  id="newPassword"
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Enter new password"
-                />
-              </div>
-              <div>
-                <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm new password"
-                />
-              </div>
-              <Button onClick={changePassword} disabled={saving}>
-                {saving ? "Changing..." : "Change Password"}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Privacy Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Shield className="h-5 w-5 mr-2" />
-                Privacy Settings
-              </CardTitle>
-              <CardDescription>
-                Control your account visibility and data sharing
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Account Visibility</Label>
-                  <p className="text-sm text-gray-500">Make your account visible to other users</p>
-                </div>
-                <Switch
-                  checked={privacySettings.account_visibility}
-                  onCheckedChange={(checked) => updatePrivacySettings({ account_visibility: checked })}
-                />
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Show Dashboard Activity</Label>
-                  <p className="text-sm text-gray-500">Allow others to see your dashboard activity</p>
-                </div>
-                <Switch
-                  checked={privacySettings.show_dashboard_activity}
-                  onCheckedChange={(checked) => updatePrivacySettings({ show_dashboard_activity: checked })}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Notification Preferences */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
+              <div className="flex items-center">
                 <Bell className="h-5 w-5 mr-2" />
-                Notification Preferences
-              </CardTitle>
+                <CardTitle>Notification Preferences</CardTitle>
+              </div>
               <CardDescription>
-                Choose which notifications you want to receive
+                Manage how you receive notifications
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Booking Notifications</Label>
-                  <p className="text-sm text-gray-500">Get notified about booking updates</p>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="email_notifications">Email Notifications</Label>
+                    <p className="text-sm text-gray-500">Receive notifications via email</p>
+                  </div>
+                  <Switch
+                    id="email_notifications"
+                    checked={notifications.email_notifications}
+                    onCheckedChange={(checked) => 
+                      setNotifications({ ...notifications, email_notifications: checked })
+                    }
+                  />
                 </div>
-                <Switch
-                  checked={notificationPrefs.bookings}
-                  onCheckedChange={(checked) => updateNotificationPrefs({ bookings: checked })}
-                />
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Account Changes</Label>
-                  <p className="text-sm text-gray-500">Get notified about account modifications</p>
+
+                <Separator />
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="booking_notifications">Booking Notifications</Label>
+                    <p className="text-sm text-gray-500">Get notified about new bookings</p>
+                  </div>
+                  <Switch
+                    id="booking_notifications"
+                    checked={notifications.booking_notifications}
+                    onCheckedChange={(checked) => 
+                      setNotifications({ ...notifications, booking_notifications: checked })
+                    }
+                  />
                 </div>
-                <Switch
-                  checked={notificationPrefs.account_changes}
-                  onCheckedChange={(checked) => updateNotificationPrefs({ account_changes: checked })}
-                />
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Service Updates</Label>
-                  <p className="text-sm text-gray-500">Get notified about service changes</p>
+
+                <Separator />
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="payment_notifications">Payment Notifications</Label>
+                    <p className="text-sm text-gray-500">Get notified about payments</p>
+                  </div>
+                  <Switch
+                    id="payment_notifications"
+                    checked={notifications.payment_notifications}
+                    onCheckedChange={(checked) => 
+                      setNotifications({ ...notifications, payment_notifications: checked })
+                    }
+                  />
                 </div>
-                <Switch
-                  checked={notificationPrefs.service_updates}
-                  onCheckedChange={(checked) => updateNotificationPrefs({ service_updates: checked })}
-                />
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Messages</Label>
-                  <p className="text-sm text-gray-500">Get notified about new messages</p>
+
+                <Separator />
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="review_notifications">Review Notifications</Label>
+                    <p className="text-sm text-gray-500">Get notified about new reviews</p>
+                  </div>
+                  <Switch
+                    id="review_notifications"
+                    checked={notifications.review_notifications}
+                    onCheckedChange={(checked) => 
+                      setNotifications({ ...notifications, review_notifications: checked })
+                    }
+                  />
                 </div>
-                <Switch
-                  checked={notificationPrefs.messages}
-                  onCheckedChange={(checked) => updateNotificationPrefs({ messages: checked })}
-                />
               </div>
             </CardContent>
           </Card>
 
-          {/* Account Controls */}
+          {/* Account Actions */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <AlertTriangle className="h-5 w-5 mr-2" />
-                Account Controls
-              </CardTitle>
+              <div className="flex items-center">
+                <Shield className="h-5 w-5 mr-2" />
+                <CardTitle>Account Actions</CardTitle>
+              </div>
               <CardDescription>
-                Manage your account status and data
+                Manage your account security and sessions
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Button
-                  variant="outline"
-                  onClick={deactivateAccount}
-                  className="w-full"
+            <CardContent>
+              <div className="space-y-4">
+                <Button 
+                  variant="outline" 
+                  onClick={handleSignOut}
+                  className="w-full md:w-auto"
                 >
-                  Deactivate Account
+                  Sign Out
                 </Button>
-                <p className="text-sm text-gray-500">
-                  Temporarily disable your account. You can reactivate it later.
-                </p>
-              </div>
-              <Separator />
-              <div className="space-y-2">
-                <Button
-                  variant="destructive"
-                  onClick={deleteAccount}
-                  className="w-full"
-                >
-                  Permanently Delete Account
-                </Button>
-                <p className="text-sm text-gray-500">
-                  Permanently delete your account and all associated data. This action cannot be undone.
-                </p>
               </div>
             </CardContent>
           </Card>

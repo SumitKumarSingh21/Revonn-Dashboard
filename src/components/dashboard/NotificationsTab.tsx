@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Check, Trash2, Calendar, MessageSquare, DollarSign, AlertCircle, Star } from "lucide-react";
+import { Bell, Check, Trash2, Calendar, MessageSquare, DollarSign, AlertCircle, Star, Settings } from "lucide-react";
 
 interface Notification {
   id: string;
@@ -24,29 +24,94 @@ const NotificationsTab = () => {
 
   useEffect(() => {
     loadNotifications();
+    setupRealtimeSubscriptions();
   }, []);
 
-  useEffect(() => {
+  const setupRealtimeSubscriptions = () => {
+    console.log("Setting up comprehensive real-time notification subscriptions");
+    
     const channel = supabase
-      .channel("notifications-changes")
+      .channel("all-notifications-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, (payload) => {
-        console.log("Notification change:", payload);
+        console.log("Real-time notification change:", payload);
+        
         if (payload.eventType === 'INSERT') {
-          // Show toast for new notifications
           const newNotification = payload.new as Notification;
           toast({
             title: newNotification.title,
             description: newNotification.message,
+            duration: 5000,
           });
+          
+          // Play notification sound (optional)
+          try {
+            const audio = new Audio('/notification-sound.mp3');
+            audio.play().catch(() => console.log('Could not play notification sound'));
+          } catch (e) {
+            console.log('Notification sound not available');
+          }
         }
+        
         loadNotifications();
       })
-      .subscribe();
+      .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, (payload) => {
+        console.log("Real-time booking change for notifications:", payload);
+        
+        if (payload.eventType === 'INSERT') {
+          toast({
+            title: "New Booking Alert!",
+            description: "You have received a new booking request",
+            duration: 5000,
+          });
+        } else if (payload.eventType === 'UPDATE') {
+          toast({
+            title: "Booking Updated",
+            description: "One of your bookings has been updated",
+            duration: 3000,
+          });
+        }
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "earnings" }, (payload) => {
+        console.log("Real-time payment notification:", payload);
+        
+        if (payload.eventType === 'INSERT') {
+          toast({
+            title: "Payment Received!",
+            description: `New payment of ₹${payload.new.amount} received`,
+            duration: 5000,
+          });
+        }
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "reviews" }, (payload) => {
+        console.log("Real-time review notification:", payload);
+        
+        if (payload.eventType === 'INSERT') {
+          toast({
+            title: "New Review!",
+            description: `You received a ${payload.new.rating}-star review`,
+            duration: 5000,
+          });
+        }
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, (payload) => {
+        console.log("Real-time message notification:", payload);
+        
+        if (payload.eventType === 'INSERT') {
+          toast({
+            title: "New Message",
+            description: "You have received a new message",
+            duration: 4000,
+          });
+        }
+      })
+      .subscribe((status) => {
+        console.log("Comprehensive notifications subscription status:", status);
+      });
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [toast]);
+  };
 
   const loadNotifications = async () => {
     try {
@@ -197,62 +262,74 @@ const NotificationsTab = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold">Notifications</h2>
-          <p className="text-gray-600">
-            Stay updated with your garage activities
+          <h2 className="text-2xl font-bold flex items-center">
+            <Bell className="h-6 w-6 mr-2" />
+            Notifications
             {unreadCount > 0 && (
-              <Badge variant="secondary" className="ml-2">
-                {unreadCount} unread
+              <Badge variant="destructive" className="ml-2">
+                {unreadCount}
               </Badge>
             )}
+          </h2>
+          <p className="text-gray-600">
+            Real-time updates on your garage activities
           </p>
         </div>
-        {unreadCount > 0 && (
-          <Button onClick={markAllAsRead} variant="outline">
-            <Check className="h-4 w-4 mr-2" />
-            Mark all as read
+        <div className="flex space-x-2">
+          {unreadCount > 0 && (
+            <Button onClick={markAllAsRead} variant="outline" size="sm">
+              <Check className="h-4 w-4 mr-2" />
+              Mark all read
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={() => window.open('/settings', '_blank')}>
+            <Settings className="h-4 w-4 mr-2" />
+            Settings
           </Button>
-        )}
+        </div>
       </div>
 
       <div className="space-y-4">
         {notifications.map((notification) => (
           <Card 
             key={notification.id} 
-            className={`hover:shadow-md transition-shadow ${
-              !notification.read ? "border-blue-200 bg-blue-50/50" : ""
+            className={`hover:shadow-md transition-all duration-200 ${
+              !notification.read ? "border-blue-200 bg-blue-50/50 shadow-sm" : ""
             }`}
           >
             <CardContent className="p-6">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-4 flex-1">
-                  <div className="flex-shrink-0">
+                  <div className="flex-shrink-0 mt-1">
                     {getNotificationIcon(notification.type)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <h3 className="font-semibold text-gray-900">
                         {notification.title}
                       </h3>
-                      <Badge className={getNotificationColor(notification.type)}>
+                      <Badge className={getNotificationColor(notification.type)} variant="secondary">
                         {notification.type}
                       </Badge>
                       {!notification.read && (
-                        <Badge variant="secondary">New</Badge>
+                        <Badge variant="destructive" className="animate-pulse">
+                          New
+                        </Badge>
                       )}
                     </div>
-                    <p className="text-gray-600 mb-2">{notification.message}</p>
+                    <p className="text-gray-600 mb-2 leading-relaxed">{notification.message}</p>
                     <p className="text-sm text-gray-500">
                       {new Date(notification.created_at).toLocaleString()}
                     </p>
                   </div>
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex space-x-2 flex-shrink-0">
                   {!notification.read && (
                     <Button 
                       variant="ghost" 
                       size="sm"
                       onClick={() => markAsRead(notification.id)}
+                      title="Mark as read"
                     >
                       <Check className="h-4 w-4" />
                     </Button>
@@ -261,6 +338,7 @@ const NotificationsTab = () => {
                     variant="ghost" 
                     size="sm"
                     onClick={() => deleteNotification(notification.id)}
+                    title="Delete notification"
                   >
                     <Trash2 className="h-4 w-4 text-red-500" />
                   </Button>
@@ -273,10 +351,15 @@ const NotificationsTab = () => {
 
       {notifications.length === 0 && (
         <Card>
-          <CardContent className="text-center py-8">
-            <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No notifications yet</h3>
-            <p className="text-gray-500">You'll receive notifications about bookings, messages, reviews, and payments here</p>
+          <CardContent className="text-center py-12">
+            <Bell className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-xl font-medium text-gray-900 mb-2">No notifications yet</h3>
+            <p className="text-gray-500 mb-4">
+              You'll receive real-time notifications about bookings, messages, reviews, and payments here
+            </p>
+            <Badge variant="outline" className="text-green-600 border-green-200">
+              Real-time updates enabled ✓
+            </Badge>
           </CardContent>
         </Card>
       )}

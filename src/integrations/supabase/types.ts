@@ -28,6 +28,7 @@ export type Database = {
           user_id: string
           vehicle_make: string | null
           vehicle_model: string | null
+          vehicle_type: string | null
         }
         Insert: {
           booking_date: string
@@ -47,6 +48,7 @@ export type Database = {
           user_id: string
           vehicle_make?: string | null
           vehicle_model?: string | null
+          vehicle_type?: string | null
         }
         Update: {
           booking_date?: string
@@ -66,6 +68,7 @@ export type Database = {
           user_id?: string
           vehicle_make?: string | null
           vehicle_model?: string | null
+          vehicle_type?: string | null
         }
         Relationships: [
           {
@@ -208,6 +211,44 @@ export type Database = {
           id?: string
         }
         Relationships: []
+      }
+      garage_time_slots: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          end_time: string
+          garage_id: string
+          id: string
+          is_available: boolean
+          start_time: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          end_time: string
+          garage_id: string
+          id?: string
+          is_available?: boolean
+          start_time: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          garage_id?: string
+          id?: string
+          is_available?: boolean
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garage_time_slots_garage_id_fkey"
+            columns: ["garage_id"]
+            isOneToOne: false
+            referencedRelation: "garages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       garages: {
         Row: {
@@ -437,6 +478,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      saved_posts: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       services: {
         Row: {
