@@ -415,6 +415,8 @@ export type Database = {
           created_at: string | null
           full_name: string | null
           id: string
+          location: string | null
+          phone: string | null
           updated_at: string | null
           username: string | null
         }
@@ -424,6 +426,8 @@ export type Database = {
           created_at?: string | null
           full_name?: string | null
           id: string
+          location?: string | null
+          phone?: string | null
           updated_at?: string | null
           username?: string | null
         }
@@ -433,6 +437,8 @@ export type Database = {
           created_at?: string | null
           full_name?: string | null
           id?: string
+          location?: string | null
+          phone?: string | null
           updated_at?: string | null
           username?: string | null
         }
