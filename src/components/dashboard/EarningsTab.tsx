@@ -38,43 +38,77 @@ const EarningsTab = () => {
     console.log("Setting up real-time earnings subscription");
     
     const channel = supabase
-      .channel("earnings-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "earnings" }, (payload) => {
-        console.log("Real-time earnings update:", payload);
-        loadEarnings();
-        
-        if (payload.eventType === 'INSERT') {
-          toast({
-            title: "New Payment Received!",
-            description: `₹${payload.new.amount} payment received`,
-          });
+      .channel("earnings-changes")
+      .on(
+        "postgres_changes", 
+        { 
+          event: "*", 
+          schema: "public", 
+          table: "earnings" 
+        }, 
+        (payload) => {
+          console.log("Real-time earnings update:", payload);
+          loadEarnings();
+          
+          if (payload.eventType === 'INSERT') {
+            toast({
+              title: "New Payment Received!",
+              description: `₹${payload.new?.amount || 0} payment received`,
+            });
+          }
         }
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, (payload) => {
-        console.log("Real-time booking update affecting earnings:", payload);
-        loadEarnings();
-      })
+      )
+      .on(
+        "postgres_changes", 
+        { 
+          event: "*", 
+          schema: "public", 
+          table: "bookings" 
+        }, 
+        (payload) => {
+          console.log("Real-time booking update affecting earnings:", payload);
+          // Only reload if booking status changed to completed
+          if (payload.new?.status === 'completed' || payload.old?.status !== payload.new?.status) {
+            loadEarnings();
+          }
+        }
+      )
       .subscribe((status) => {
         console.log("Earnings subscription status:", status);
       });
 
     return () => {
+      console.log("Cleaning up earnings subscription");
       supabase.removeChannel(channel);
     };
   };
 
   const loadEarnings = async () => {
     try {
+      console.log("Loading earnings data...");
       const { data: user } = await supabase.auth.getUser();
-      if (!user.user) return;
+      if (!user.user) {
+        console.log("No authenticated user found");
+        return;
+      }
 
-      const { data: garage } = await supabase
+      const { data: garage, error: garageError } = await supabase
         .from("garages")
         .select("id")
         .eq("owner_id", user.user.id)
         .single();
 
-      if (!garage) return;
+      if (garageError) {
+        console.error("Error fetching garage:", garageError);
+        throw garageError;
+      }
+
+      if (!garage) {
+        console.log("No garage found for user");
+        return;
+      }
+
+      console.log("Loading earnings for garage:", garage.id);
 
       const { data, error } = await supabase
         .from("earnings")
@@ -85,8 +119,12 @@ const EarningsTab = () => {
         .eq("garage_id", garage.id)
         .order("transaction_date", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error loading earnings:", error);
+        throw error;
+      }
 
+      console.log("Loaded earnings data:", data);
       const earningsData = data || [];
       setEarnings(earningsData);
       calculateStats(earningsData);
@@ -109,17 +147,25 @@ const EarningsTab = () => {
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    const totalEarnings = earningsData.reduce((sum, earning) => sum + earning.amount, 0);
+    const totalEarnings = earningsData.reduce((sum, earning) => sum + Number(earning.amount), 0);
     
     const monthlyEarnings = earningsData
-      .filter(earning => new Date(earning.transaction_date || "") >= oneMonthAgo)
-      .reduce((sum, earning) => sum + earning.amount, 0);
+      .filter(earning => {
+        if (!earning.transaction_date) return false;
+        return new Date(earning.transaction_date) >= oneMonthAgo;
+      })
+      .reduce((sum, earning) => sum + Number(earning.amount), 0);
     
     const weeklyEarnings = earningsData
-      .filter(earning => new Date(earning.transaction_date || "") >= oneWeekAgo)
-      .reduce((sum, earning) => sum + earning.amount, 0);
+      .filter(earning => {
+        if (!earning.transaction_date) return false;
+        return new Date(earning.transaction_date) >= oneWeekAgo;
+      })
+      .reduce((sum, earning) => sum + Number(earning.amount), 0);
 
     const averageTransaction = earningsData.length > 0 ? totalEarnings / earningsData.length : 0;
+
+    console.log("Calculated stats:", { totalEarnings, monthlyEarnings, weeklyEarnings, averageTransaction });
 
     setStats({
       totalEarnings,
@@ -138,8 +184,11 @@ const EarningsTab = () => {
 
     const chartData = last30Days.map(date => {
       const dayEarnings = earningsData
-        .filter(earning => earning.transaction_date?.split('T')[0] === date)
-        .reduce((sum, earning) => sum + earning.amount, 0);
+        .filter(earning => {
+          if (!earning.transaction_date) return false;
+          return earning.transaction_date.split('T')[0] === date;
+        })
+        .reduce((sum, earning) => sum + Number(earning.amount), 0);
 
       return {
         date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
@@ -152,13 +201,13 @@ const EarningsTab = () => {
 
   const generatePaymentMethodData = (earningsData: Earning[]) => {
     const methodCounts = earningsData.reduce((acc, earning) => {
-      const method = earning.payment_method || 'Unknown';
-      acc[method] = (acc[method] || 0) + earning.amount;
+      const method = earning.payment_method || 'Cash';
+      acc[method] = (acc[method] || 0) + Number(earning.amount);
       return acc;
     }, {} as Record<string, number>);
 
     const data = Object.entries(methodCounts).map(([method, amount]) => ({
-      name: method,
+      name: method.charAt(0).toUpperCase() + method.slice(1),
       value: amount,
     }));
 
@@ -266,7 +315,7 @@ const EarningsTab = () => {
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
-                  label={({ name, value }) => `${name}: ₹${value}`}
+                  label={({ name, value }) => `${name}: ₹${Number(value).toFixed(0)}`}
                 >
                   {paymentMethodData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -292,7 +341,7 @@ const EarningsTab = () => {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-medium">
-                      {earning.bookings?.customer_name || "Unknown Customer"}
+                      {earning.bookings?.customer_name || "Walk-in Customer"}
                     </span>
                     <Badge variant={earning.status === "completed" ? "default" : "secondary"}>
                       {earning.status}
@@ -303,12 +352,12 @@ const EarningsTab = () => {
                       new Date(earning.transaction_date).toLocaleString() : 
                       "Date not available"
                     }
-                    {earning.payment_method && ` • ${earning.payment_method}`}
+                    {earning.payment_method && ` • ${earning.payment_method.charAt(0).toUpperCase() + earning.payment_method.slice(1)}`}
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="font-bold text-green-600">
-                    +₹{earning.amount.toFixed(2)}
+                    +₹{Number(earning.amount).toFixed(2)}
                   </div>
                 </div>
               </div>
@@ -319,7 +368,7 @@ const EarningsTab = () => {
             <div className="text-center py-8">
               <DollarSign className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No earnings yet</h3>
-              <p className="text-gray-500">Your transaction history will appear here in real-time</p>
+              <p className="text-gray-500">Complete some bookings to see your earnings here in real-time</p>
             </div>
           )}
         </CardContent>
