@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -51,9 +50,12 @@ const EarningsTab = () => {
           loadEarnings();
           
           if (payload.eventType === 'INSERT') {
+            const amount = payload.new && typeof payload.new === 'object' && 'amount' in payload.new 
+              ? payload.new.amount as number 
+              : 0;
             toast({
               title: "New Payment Received!",
-              description: `₹${payload.new?.amount || 0} payment received`,
+              description: `₹${amount} payment received`,
             });
           }
         }
@@ -68,7 +70,14 @@ const EarningsTab = () => {
         (payload) => {
           console.log("Real-time booking update affecting earnings:", payload);
           // Only reload if booking status changed to completed
-          if (payload.new?.status === 'completed' || payload.old?.status !== payload.new?.status) {
+          const newStatus = payload.new && typeof payload.new === 'object' && 'status' in payload.new 
+            ? payload.new.status as string 
+            : null;
+          const oldStatus = payload.old && typeof payload.old === 'object' && 'status' in payload.old 
+            ? payload.old.status as string 
+            : null;
+            
+          if (newStatus === 'completed' || oldStatus !== newStatus) {
             loadEarnings();
           }
         }
