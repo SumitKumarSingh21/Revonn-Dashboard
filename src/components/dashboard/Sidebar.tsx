@@ -15,7 +15,8 @@ import {
   X,
   Users,
   Bot,
-  Building2
+  Building2,
+  Wrench
 } from "lucide-react";
 
 interface SidebarProps {
@@ -36,6 +37,7 @@ const Sidebar = ({ stats }: SidebarProps) => {
     { icon: Building2, label: "Garage Profile", value: "garage-profile", count: null },
     { icon: Calendar, label: "Bookings", value: "bookings", count: stats.totalBookings },
     { icon: Users, label: "Services", value: "services", count: stats.activeServices },
+    { icon: Wrench, label: "Mechanics", value: "mechanics", count: null },
     { icon: IndianRupee, label: "Earnings", value: "earnings", count: null },
     { icon: Star, label: "Reviews", value: "reviews", count: stats.totalReviews },
     { icon: Bell, label: "Notifications", value: "notifications", count: null },

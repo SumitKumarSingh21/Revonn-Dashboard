@@ -13,6 +13,7 @@ import ReviewsTab from "@/components/dashboard/ReviewsTab";
 import NotificationsTab from "@/components/dashboard/NotificationsTab";
 import RevvyTab from "@/components/dashboard/RevvyTab";
 import GarageProfileTab from "@/components/dashboard/GarageProfileTab";
+import MechanicsTab from "@/components/dashboard/MechanicsTab";
 import Sidebar from "@/components/dashboard/Sidebar";
 import { User } from "@supabase/supabase-js";
 
@@ -211,6 +212,10 @@ const Dashboard = () => {
 
             <TabsContent value="services">
               <ServicesTab />
+            </TabsContent>
+
+            <TabsContent value="mechanics">
+              <MechanicsTab />
             </TabsContent>
 
             <TabsContent value="earnings">

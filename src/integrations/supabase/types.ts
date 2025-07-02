@@ -11,6 +11,9 @@ export type Database = {
     Tables: {
       bookings: {
         Row: {
+          assigned_at: string | null
+          assigned_mechanic_id: string | null
+          assigned_mechanic_name: string | null
           booking_date: string
           booking_time: string
           car_details: string | null
@@ -31,6 +34,9 @@ export type Database = {
           vehicle_type: string | null
         }
         Insert: {
+          assigned_at?: string | null
+          assigned_mechanic_id?: string | null
+          assigned_mechanic_name?: string | null
           booking_date: string
           booking_time: string
           car_details?: string | null
@@ -51,6 +57,9 @@ export type Database = {
           vehicle_type?: string | null
         }
         Update: {
+          assigned_at?: string | null
+          assigned_mechanic_id?: string | null
+          assigned_mechanic_name?: string | null
           booking_date?: string
           booking_time?: string
           car_details?: string | null
@@ -71,6 +80,13 @@ export type Database = {
           vehicle_type?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "bookings_assigned_mechanic_id_fkey"
+            columns: ["assigned_mechanic_id"]
+            isOneToOne: false
+            referencedRelation: "mechanics"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bookings_garage_id_fkey"
             columns: ["garage_id"]
@@ -300,6 +316,50 @@ export type Database = {
           working_hours?: Json | null
         }
         Relationships: []
+      }
+      mechanics: {
+        Row: {
+          created_at: string
+          email: string | null
+          garage_id: string
+          id: string
+          mechanic_id: string
+          name: string
+          phone: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          garage_id: string
+          id?: string
+          mechanic_id: string
+          name: string
+          phone?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          garage_id?: string
+          id?: string
+          mechanic_id?: string
+          name?: string
+          phone?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mechanics_garage_id_fkey"
+            columns: ["garage_id"]
+            isOneToOne: false
+            referencedRelation: "garages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       messages: {
         Row: {
@@ -552,7 +612,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_mechanic_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
