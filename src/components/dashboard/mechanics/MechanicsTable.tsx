@@ -22,86 +22,110 @@ interface MechanicsTableProps {
 const MechanicsTable = ({ mechanics, onMechanicChange }: MechanicsTableProps) => {
   if (mechanics.length === 0) {
     return (
-      <div className="text-center py-8">
+      <div className="text-center py-12 px-4">
         <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
         <h3 className="text-lg font-medium text-gray-900 mb-2">
           No mechanics found
         </h3>
-        <p className="text-gray-500">
-          Add your first mechanic to get started
+        <p className="text-gray-500 max-w-sm mx-auto">
+          Add your first mechanic to get started. They will be available for booking assignments.
         </p>
       </div>
     );
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Mechanic</TableHead>
-          <TableHead>ID</TableHead>
-          <TableHead>Contact</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Added</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {mechanics.map((mechanic) => (
-          <TableRow key={mechanic.id}>
-            <TableCell>
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-gray-400" />
-                <span className="font-medium">{mechanic.name}</span>
-              </div>
-            </TableCell>
-            <TableCell>
-              <Badge variant="outline">{mechanic.mechanic_id}</Badge>
-            </TableCell>
-            <TableCell>
-              <div className="space-y-1">
-                {mechanic.phone && (
-                  <div className="flex items-center gap-1 text-sm">
-                    <Phone className="h-3 w-3" />
-                    {mechanic.phone}
-                  </div>
-                )}
-                {mechanic.email && (
-                  <div className="flex items-center gap-1 text-sm">
-                    <Mail className="h-3 w-3" />
-                    {mechanic.email}
-                  </div>
-                )}
-              </div>
-            </TableCell>
-            <TableCell>
-              <Badge 
-                className={mechanic.status === 'active' 
-                  ? 'bg-green-100 text-green-800' 
-                  : 'bg-red-100 text-red-800'
-                }
-              >
-                {mechanic.status}
-              </Badge>
-            </TableCell>
-            <TableCell>
-              <span className="text-sm text-gray-500">
-                {new Date(mechanic.created_at).toLocaleDateString()}
-              </span>
-            </TableCell>
-            <TableCell>
-              <MechanicActions
-                mechanicId={mechanic.id}
-                mechanicName={mechanic.name}
-                currentStatus={mechanic.status}
-                onStatusChange={onMechanicChange}
-                onDelete={onMechanicChange}
-              />
-            </TableCell>
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="min-w-[180px]">Mechanic</TableHead>
+            <TableHead className="min-w-[100px]">ID</TableHead>
+            <TableHead className="min-w-[180px] hidden md:table-cell">Contact</TableHead>
+            <TableHead className="min-w-[100px]">Status</TableHead>
+            <TableHead className="min-w-[120px] hidden lg:table-cell">Added</TableHead>
+            <TableHead className="text-right min-w-[120px]">Actions</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {mechanics.map((mechanic) => (
+            <TableRow key={mechanic.id}>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <span className="font-medium block truncate">{mechanic.name}</span>
+                    {/* Show contact info on mobile */}
+                    <div className="md:hidden text-sm text-gray-500 space-y-1 mt-1">
+                      {mechanic.phone && (
+                        <div className="flex items-center gap-1">
+                          <Phone className="h-3 w-3" />
+                          <span className="truncate">{mechanic.phone}</span>
+                        </div>
+                      )}
+                      {mechanic.email && (
+                        <div className="flex items-center gap-1">
+                          <Mail className="h-3 w-3" />
+                          <span className="truncate">{mechanic.email}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>
+                <Badge variant="outline" className="text-xs">
+                  {mechanic.mechanic_id}
+                </Badge>
+              </TableCell>
+              <TableCell className="hidden md:table-cell">
+                <div className="space-y-1">
+                  {mechanic.phone && (
+                    <div className="flex items-center gap-1 text-sm">
+                      <Phone className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">{mechanic.phone}</span>
+                    </div>
+                  )}
+                  {mechanic.email && (
+                    <div className="flex items-center gap-1 text-sm">
+                      <Mail className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">{mechanic.email}</span>
+                    </div>
+                  )}
+                  {!mechanic.phone && !mechanic.email && (
+                    <span className="text-sm text-gray-400">No contact info</span>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>
+                <Badge 
+                  className={`text-xs ${mechanic.status === 'active' 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-red-100 text-red-800'
+                  }`}
+                >
+                  {mechanic.status}
+                </Badge>
+              </TableCell>
+              <TableCell className="hidden lg:table-cell">
+                <span className="text-sm text-gray-500">
+                  {new Date(mechanic.created_at).toLocaleDateString()}
+                </span>
+              </TableCell>
+              <TableCell>
+                <MechanicActions
+                  mechanicId={mechanic.id}
+                  mechanicName={mechanic.name}
+                  currentStatus={mechanic.status}
+                  onStatusChange={onMechanicChange}
+                  onDelete={onMechanicChange}
+                />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 };
 

@@ -91,22 +91,24 @@ const MechanicsTab = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold">Mechanics</h2>
-          <p className="text-gray-600">Manage your garage mechanics and their assignments</p>
+    <div className="space-y-6 p-4 sm:p-6">
+      <div className="flex flex-col space-y-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h2 className="text-2xl font-bold">Mechanics</h2>
+            <p className="text-gray-600">Manage your garage mechanics and their assignments</p>
+          </div>
+          
+          <MechanicForm onMechanicAdded={loadMechanics} />
         </div>
-        
-        <MechanicForm onMechanicAdded={loadMechanics} />
-      </div>
 
-      <MechanicSearch
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        totalMechanics={mechanics.length}
-        filteredCount={filteredMechanics.length}
-      />
+        <MechanicSearch
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          totalMechanics={mechanics.length}
+          filteredCount={filteredMechanics.length}
+        />
+      </div>
 
       <Card>
         <CardContent className="p-0">

@@ -30,6 +30,19 @@ const MechanicAssignmentSelect = ({
 
   useEffect(() => {
     loadMechanics();
+    
+    // Set up real-time subscription for mechanics changes
+    const channel = supabase
+      .channel("mechanics-assignment-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "mechanics" }, () => {
+        console.log("Mechanics changed, reloading for assignment...");
+        loadMechanics();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const loadMechanics = async () => {
@@ -120,8 +133,8 @@ const MechanicAssignmentSelect = ({
 
   if (mechanics.length === 0) {
     return (
-      <div className="text-sm text-gray-500">
-        No active mechanics available
+      <div className="text-sm text-gray-500 p-2 bg-gray-50 rounded">
+        No active mechanics available. Add mechanics first to assign them to bookings.
       </div>
     );
   }

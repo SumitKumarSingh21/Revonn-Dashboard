@@ -23,29 +23,42 @@ const MechanicForm = ({ onMechanicAdded }: MechanicFormProps) => {
   const { toast } = useToast();
 
   const generateUniqueMechanicId = async () => {
+    // Get current user's garage to scope the search
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) throw new Error("User not authenticated");
+
+    const { data: garage } = await supabase
+      .from("garages")
+      .select("id")
+      .eq("owner_id", user.user.id)
+      .single();
+
+    if (!garage) throw new Error("Garage not found");
+
+    // Get all existing mechanic IDs for this garage
+    const { data: existingMechanics } = await supabase
+      .from("mechanics")
+      .select("mechanic_id")
+      .eq("garage_id", garage.id);
+
+    const existingIds = new Set(existingMechanics?.map(m => m.mechanic_id) || []);
+    
+    // Find the next available ID
     let counter = 1;
-    let attempts = 0;
-    const maxAttempts = 100;
-
-    while (attempts < maxAttempts) {
-      const newId = 'MECH' + String(counter).padStart(3, '0');
-      
-      const { data: existing } = await supabase
-        .from("mechanics")
-        .select("mechanic_id")
-        .eq("mechanic_id", newId)
-        .single();
-
-      if (!existing) {
-        return newId;
-      }
-      
+    let newId;
+    
+    do {
+      newId = 'MECH' + String(counter).padStart(3, '0');
       counter++;
-      attempts++;
+    } while (existingIds.has(newId) && counter <= 999);
+    
+    // If we've exhausted all possibilities, use timestamp
+    if (counter > 999) {
+      newId = 'MECH' + Date.now().toString().slice(-6);
     }
     
-    // If we can't find a unique ID, use timestamp
-    return 'MECH' + Date.now().toString().slice(-6);
+    console.log("Generated unique mechanic ID:", newId);
+    return newId;
   };
 
   const handleAddMechanic = async (e: React.FormEvent) => {
@@ -81,7 +94,10 @@ const MechanicForm = ({ onMechanicAdded }: MechanicFormProps) => {
         .from("mechanics")
         .insert(insertData);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Database error:", error);
+        throw error;
+      }
 
       toast({
         title: "Success",
@@ -95,7 +111,7 @@ const MechanicForm = ({ onMechanicAdded }: MechanicFormProps) => {
       console.error("Error adding mechanic:", error);
       toast({
         title: "Error",
-        description: "Failed to add mechanic",
+        description: error instanceof Error ? error.message : "Failed to add mechanic",
         variant: "destructive",
       });
     } finally {
@@ -106,12 +122,12 @@ const MechanicForm = ({ onMechanicAdded }: MechanicFormProps) => {
   return (
     <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button className="w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
           Add Mechanic
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add New Mechanic</DialogTitle>
           <DialogDescription>
@@ -148,16 +164,17 @@ const MechanicForm = ({ onMechanicAdded }: MechanicFormProps) => {
               placeholder="Enter email address"
             />
           </div>
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
             <Button
               type="button"
               variant="outline"
               onClick={() => setAddDialogOpen(false)}
               disabled={formLoading}
+              className="w-full sm:w-auto"
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={formLoading}>
+            <Button type="submit" disabled={formLoading} className="w-full sm:w-auto">
               {formLoading ? "Adding..." : "Add Mechanic"}
             </Button>
           </div>
