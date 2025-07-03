@@ -22,63 +22,85 @@ const MechanicForm = ({ onMechanicAdded }: MechanicFormProps) => {
   const [formLoading, setFormLoading] = useState(false);
   const { toast } = useToast();
 
-  const generateUniqueMechanicId = async () => {
-    // Get current user's garage to scope the search
-    const { data: user } = await supabase.auth.getUser();
-    if (!user.user) throw new Error("User not authenticated");
+  const generateUniqueMechanicId = async (garageId: string) => {
+    try {
+      console.log("Starting unique ID generation for garage:", garageId);
+      
+      // Get all existing mechanic IDs for this specific garage
+      const { data: existingMechanics, error: fetchError } = await supabase
+        .from("mechanics")
+        .select("mechanic_id")
+        .eq("garage_id", garageId)
+        .order("mechanic_id");
 
-    const { data: garage } = await supabase
-      .from("garages")
-      .select("id")
-      .eq("owner_id", user.user.id)
-      .single();
+      if (fetchError) {
+        console.error("Error fetching existing mechanics:", fetchError);
+        throw fetchError;
+      }
 
-    if (!garage) throw new Error("Garage not found");
-
-    // Get all existing mechanic IDs for this garage
-    const { data: existingMechanics } = await supabase
-      .from("mechanics")
-      .select("mechanic_id")
-      .eq("garage_id", garage.id);
-
-    const existingIds = new Set(existingMechanics?.map(m => m.mechanic_id) || []);
-    
-    // Find the next available ID
-    let counter = 1;
-    let newId;
-    
-    do {
-      newId = 'MECH' + String(counter).padStart(3, '0');
-      counter++;
-    } while (existingIds.has(newId) && counter <= 999);
-    
-    // If we've exhausted all possibilities, use timestamp
-    if (counter > 999) {
-      newId = 'MECH' + Date.now().toString().slice(-6);
+      const existingIds = new Set((existingMechanics || []).map(m => m.mechanic_id));
+      console.log("Existing mechanic IDs:", Array.from(existingIds));
+      
+      // Try MECH format first (MECH001, MECH002, etc.)
+      for (let counter = 1; counter <= 999; counter++) {
+        const newId = 'MECH' + String(counter).padStart(3, '0');
+        if (!existingIds.has(newId)) {
+          console.log("Generated unique mechanic ID:", newId);
+          return newId;
+        }
+      }
+      
+      // Fallback to timestamp-based ID if all MECH IDs are taken
+      const timestampId = 'MECH' + Date.now().toString().slice(-6);
+      console.log("Using timestamp-based ID:", timestampId);
+      return timestampId;
+      
+    } catch (error) {
+      console.error("Error in generateUniqueMechanicId:", error);
+      // Ultimate fallback
+      const fallbackId = 'MECH' + Math.random().toString(36).substr(2, 6).toUpperCase();
+      console.log("Using fallback random ID:", fallbackId);
+      return fallbackId;
     }
-    
-    console.log("Generated unique mechanic ID:", newId);
-    return newId;
   };
 
   const handleAddMechanic = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.name.trim()) {
+      toast({
+        title: "Error",
+        description: "Mechanic name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setFormLoading(true);
 
     try {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error("User not authenticated");
+      console.log("Starting mechanic addition process...");
+      
+      // Get current user and garage
+      const { data: user, error: userError } = await supabase.auth.getUser();
+      if (userError || !user.user) {
+        throw new Error("Authentication required");
+      }
 
-      const { data: garage } = await supabase
+      const { data: garage, error: garageError } = await supabase
         .from("garages")
         .select("id")
         .eq("owner_id", user.user.id)
         .single();
 
-      if (!garage) throw new Error("Garage not found");
+      if (garageError || !garage) {
+        throw new Error("Garage not found. Please create a garage first.");
+      }
 
-      // Generate a unique mechanic ID
-      const mechanicId = await generateUniqueMechanicId();
+      console.log("Found garage:", garage.id);
+
+      // Generate unique mechanic ID
+      const mechanicId = await generateUniqueMechanicId(garage.id);
 
       const insertData = {
         garage_id: garage.id,
@@ -86,17 +108,33 @@ const MechanicForm = ({ onMechanicAdded }: MechanicFormProps) => {
         phone: formData.phone.trim() || null,
         email: formData.email.trim() || null,
         mechanic_id: mechanicId,
+        status: 'active'
       };
 
       console.log("Inserting mechanic with data:", insertData);
 
-      const { error } = await supabase
+      const { error: insertError } = await supabase
         .from("mechanics")
         .insert(insertData);
 
-      if (error) {
-        console.error("Database error:", error);
-        throw error;
+      if (insertError) {
+        console.error("Insert error:", insertError);
+        if (insertError.code === '23505') {
+          // If we still get a duplicate key error, try one more time with a random ID
+          const randomId = 'MECH' + Math.random().toString(36).substr(2, 8).toUpperCase();
+          const retryData = { ...insertData, mechanic_id: randomId };
+          
+          console.log("Retrying with random ID:", retryData);
+          const { error: retryError } = await supabase
+            .from("mechanics")
+            .insert(retryData);
+            
+          if (retryError) {
+            throw retryError;
+          }
+        } else {
+          throw insertError;
+        }
       }
 
       toast({
@@ -104,14 +142,16 @@ const MechanicForm = ({ onMechanicAdded }: MechanicFormProps) => {
         description: "Mechanic added successfully",
       });
 
+      // Reset form and close dialog
       setFormData({ name: "", phone: "", email: "" });
       setAddDialogOpen(false);
       onMechanicAdded();
+
     } catch (error) {
       console.error("Error adding mechanic:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to add mechanic",
+        description: error instanceof Error ? error.message : "Failed to add mechanic. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -143,6 +183,7 @@ const MechanicForm = ({ onMechanicAdded }: MechanicFormProps) => {
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Enter mechanic's full name"
               required
+              disabled={formLoading}
             />
           </div>
           <div>
@@ -152,6 +193,7 @@ const MechanicForm = ({ onMechanicAdded }: MechanicFormProps) => {
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               placeholder="Enter phone number"
+              disabled={formLoading}
             />
           </div>
           <div>
@@ -162,6 +204,7 @@ const MechanicForm = ({ onMechanicAdded }: MechanicFormProps) => {
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="Enter email address"
+              disabled={formLoading}
             />
           </div>
           <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">

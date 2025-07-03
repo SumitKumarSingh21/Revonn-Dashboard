@@ -29,23 +29,37 @@ const MechanicsTab = () => {
   }, []);
 
   useEffect(() => {
+    console.log("Setting up real-time mechanics subscription...");
     const channel = supabase
-      .channel("mechanics-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "mechanics" }, () => {
-        console.log("Mechanics table changed, reloading...");
-        loadMechanics();
-      })
+      .channel("mechanics-realtime")
+      .on(
+        "postgres_changes",
+        { 
+          event: "*", 
+          schema: "public", 
+          table: "mechanics" 
+        },
+        (payload) => {
+          console.log("Real-time mechanics change:", payload);
+          loadMechanics();
+        }
+      )
       .subscribe();
 
     return () => {
+      console.log("Cleaning up mechanics subscription...");
       supabase.removeChannel(channel);
     };
   }, []);
 
   const loadMechanics = async () => {
     try {
+      console.log("Loading mechanics...");
       const { data: user } = await supabase.auth.getUser();
-      if (!user.user) return;
+      if (!user.user) {
+        console.log("No authenticated user found");
+        return;
+      }
 
       const { data: garage } = await supabase
         .from("garages")
@@ -53,7 +67,13 @@ const MechanicsTab = () => {
         .eq("owner_id", user.user.id)
         .single();
 
-      if (!garage) return;
+      if (!garage) {
+        console.log("No garage found for user");
+        setMechanics([]);
+        return;
+      }
+
+      console.log("Found garage:", garage.id);
 
       const { data, error } = await supabase
         .from("mechanics")
@@ -61,7 +81,12 @@ const MechanicsTab = () => {
         .eq("garage_id", garage.id)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error loading mechanics:", error);
+        throw error;
+      }
+
+      console.log("Loaded mechanics:", data);
       setMechanics(data || []);
     } catch (error) {
       console.error("Error loading mechanics:", error);

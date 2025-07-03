@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { User } from "lucide-react";
 
 interface Mechanic {
   id: string;
@@ -32,15 +33,25 @@ const MechanicAssignmentSelect = ({
     loadMechanics();
     
     // Set up real-time subscription for mechanics changes
+    console.log("Setting up mechanic assignment real-time subscription...");
     const channel = supabase
-      .channel("mechanics-assignment-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "mechanics" }, () => {
-        console.log("Mechanics changed, reloading for assignment...");
-        loadMechanics();
-      })
+      .channel("mechanics-assignment-realtime")
+      .on(
+        "postgres_changes", 
+        { 
+          event: "*", 
+          schema: "public", 
+          table: "mechanics" 
+        }, 
+        (payload) => {
+          console.log("Mechanics changed for assignment:", payload);
+          loadMechanics();
+        }
+      )
       .subscribe();
 
     return () => {
+      console.log("Cleaning up mechanic assignment subscription...");
       supabase.removeChannel(channel);
     };
   }, []);
@@ -68,21 +79,21 @@ const MechanicAssignmentSelect = ({
       if (error) throw error;
       setMechanics(data || []);
     } catch (error) {
-      console.error("Error loading mechanics:", error);
+      console.error("Error loading mechanics for assignment:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAssignment = async (mechanicId: string) => {
-    if (mechanicId === "unassign") {
+  const handleAssignment = async (value: string) => {
+    if (value === "unassign") {
       await updateBookingAssignment(null, null);
       return;
     }
 
-    const selectedMechanic = mechanics.find(m => m.id === mechanicId);
+    const selectedMechanic = mechanics.find(m => m.id === value);
     if (selectedMechanic) {
-      await updateBookingAssignment(mechanicId, selectedMechanic.name);
+      await updateBookingAssignment(value, selectedMechanic.name);
     }
   };
 
@@ -110,11 +121,7 @@ const MechanicAssignmentSelect = ({
       // Notify parent component
       onAssignmentChange?.(mechanicId, mechanicName);
 
-      // Send notification to customer (placeholder for now)
-      if (mechanicId && mechanicName) {
-        console.log(`Notification: Mechanic ${mechanicName} assigned to booking ${bookingId}`);
-        // Here you would implement the actual notification system
-      }
+      console.log(`Mechanic assignment updated: ${mechanicName || 'Unassigned'} for booking ${bookingId}`);
     } catch (error) {
       console.error("Error updating assignment:", error);
       toast({
@@ -133,8 +140,11 @@ const MechanicAssignmentSelect = ({
 
   if (mechanics.length === 0) {
     return (
-      <div className="text-sm text-gray-500 p-2 bg-gray-50 rounded">
-        No active mechanics available. Add mechanics first to assign them to bookings.
+      <div className="text-sm text-gray-500 p-3 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+        <div className="flex items-center gap-2">
+          <User className="h-4 w-4" />
+          <span>No active mechanics available. Add mechanics first to assign them to bookings.</span>
+        </div>
       </div>
     );
   }
@@ -144,10 +154,11 @@ const MechanicAssignmentSelect = ({
     : null;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {currentMechanic && (
         <div className="flex items-center gap-2">
-          <Badge className="bg-blue-100 text-blue-800">
+          <Badge className="bg-blue-100 text-blue-800 px-3 py-1">
+            <User className="h-3 w-3 mr-1" />
             {currentMechanic.name} ({currentMechanic.mechanic_id})
           </Badge>
         </div>
@@ -167,10 +178,13 @@ const MechanicAssignmentSelect = ({
                 : "Assign mechanic"
           } />
         </SelectTrigger>
-        <SelectContent className="bg-white z-50">
+        <SelectContent className="bg-white border shadow-lg z-50">
           {currentMechanicId && (
             <SelectItem value="unassign" className="text-red-600">
-              Unassign Mechanic
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                Unassign Mechanic
+              </div>
             </SelectItem>
           )}
           {mechanics.map((mechanic) => (
@@ -179,7 +193,10 @@ const MechanicAssignmentSelect = ({
               value={mechanic.id}
               disabled={mechanic.id === currentMechanicId}
             >
-              {mechanic.name} ({mechanic.mechanic_id})
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                {mechanic.name} ({mechanic.mechanic_id})
+              </div>
             </SelectItem>
           ))}
         </SelectContent>

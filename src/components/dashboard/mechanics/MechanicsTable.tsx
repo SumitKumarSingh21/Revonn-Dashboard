@@ -49,10 +49,12 @@ const MechanicsTable = ({ mechanics, onMechanicChange }: MechanicsTableProps) =>
         </TableHeader>
         <TableBody>
           {mechanics.map((mechanic) => (
-            <TableRow key={mechanic.id}>
+            <TableRow key={mechanic.id} className="hover:bg-gray-50/80">
               <TableCell>
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <User className="h-4 w-4 text-blue-600" />
+                  </div>
                   <div className="min-w-0">
                     <span className="font-medium block truncate">{mechanic.name}</span>
                     {/* Show contact info on mobile */}
@@ -74,21 +76,21 @@ const MechanicsTable = ({ mechanics, onMechanicChange }: MechanicsTableProps) =>
                 </div>
               </TableCell>
               <TableCell>
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline" className="text-xs font-mono">
                   {mechanic.mechanic_id}
                 </Badge>
               </TableCell>
               <TableCell className="hidden md:table-cell">
                 <div className="space-y-1">
                   {mechanic.phone && (
-                    <div className="flex items-center gap-1 text-sm">
-                      <Phone className="h-3 w-3 flex-shrink-0" />
+                    <div className="flex items-center gap-2 text-sm">
+                      <Phone className="h-3 w-3 flex-shrink-0 text-gray-400" />
                       <span className="truncate">{mechanic.phone}</span>
                     </div>
                   )}
                   {mechanic.email && (
-                    <div className="flex items-center gap-1 text-sm">
-                      <Mail className="h-3 w-3 flex-shrink-0" />
+                    <div className="flex items-center gap-2 text-sm">
+                      <Mail className="h-3 w-3 flex-shrink-0 text-gray-400" />
                       <span className="truncate">{mechanic.email}</span>
                     </div>
                   )}
@@ -99,9 +101,10 @@ const MechanicsTable = ({ mechanics, onMechanicChange }: MechanicsTableProps) =>
               </TableCell>
               <TableCell>
                 <Badge 
+                  variant={mechanic.status === 'active' ? 'default' : 'secondary'}
                   className={`text-xs ${mechanic.status === 'active' 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-red-100 text-red-800'
+                    ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                    : 'bg-red-100 text-red-800 hover:bg-red-200'
                   }`}
                 >
                   {mechanic.status}
