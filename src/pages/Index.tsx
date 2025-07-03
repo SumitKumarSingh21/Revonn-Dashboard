@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -226,19 +227,22 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
+      <footer className="bg-red-900 text-white py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <div className="flex items-center justify-center mb-6">
-            <Car className="h-8 w-8 text-blue-400 mr-3" />
-            <span className="text-xl font-bold">Garage Flow Control Center</span>
+            <img src="/lovable-uploads/abba9adf-0296-4e5e-a02b-8c714c4c5306.png" alt="Revonn Logo" className="h-12 w-12 mr-3" />
+            <div className="text-left">
+              <span className="text-2xl font-bold text-red-100">Revonn</span>
+              <p className="text-red-300 text-sm">Beyond Class</p>
+            </div>
           </div>
-          <p className="text-gray-400 mb-6">
+          <p className="text-red-200 mb-6">
             Complete garage management solution for modern automotive businesses
           </p>
-          <div className="flex justify-center space-x-6 text-sm text-gray-400">
-            <a href="#" className="hover:text-white">Privacy Policy</a>
-            <a href="#" className="hover:text-white">Terms of Service</a>
-            <a href="#" className="hover:text-white">Contact Support</a>
+          <div className="flex justify-center space-x-6 text-sm text-red-300">
+            <a href="#" className="hover:text-red-100 transition-colors">Privacy Policy</a>
+            <a href="#" className="hover:text-red-100 transition-colors">Terms of Service</a>
+            <a href="#" className="hover:text-red-100 transition-colors">Contact Support</a>
           </div>
         </div>
       </footer>
