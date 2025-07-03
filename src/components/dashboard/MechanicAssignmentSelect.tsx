@@ -31,29 +31,6 @@ const MechanicAssignmentSelect = ({
 
   useEffect(() => {
     loadMechanics();
-    
-    // Set up real-time subscription for mechanics changes
-    console.log("Setting up mechanic assignment real-time subscription...");
-    const channel = supabase
-      .channel("mechanics-assignment-realtime")
-      .on(
-        "postgres_changes", 
-        { 
-          event: "*", 
-          schema: "public", 
-          table: "mechanics" 
-        }, 
-        (payload) => {
-          console.log("Mechanics changed for assignment:", payload);
-          loadMechanics();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      console.log("Cleaning up mechanic assignment subscription...");
-      supabase.removeChannel(channel);
-    };
   }, []);
 
   const loadMechanics = async () => {

@@ -34,17 +34,26 @@ const BookingsTab = () => {
 
   useEffect(() => {
     loadBookings();
-  }, []);
 
-  useEffect(() => {
+    // Set up a single real-time subscription for bookings
     const channel = supabase
-      .channel("bookings-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, () => {
-        loadBookings();
-      })
+      .channel("bookings-realtime-updates")
+      .on(
+        "postgres_changes", 
+        { 
+          event: "*", 
+          schema: "public", 
+          table: "bookings" 
+        }, 
+        (payload) => {
+          console.log("Booking updated:", payload);
+          loadBookings();
+        }
+      )
       .subscribe();
 
     return () => {
+      console.log("Cleaning up bookings subscription...");
       supabase.removeChannel(channel);
     };
   }, []);
