@@ -248,7 +248,15 @@ const Index = () => {
             <TermsAndConditions>
               <button className="hover:text-red-100 transition-colors">Terms & Conditions</button>
             </TermsAndConditions>
-            <a href="#" className="hover:text-red-100 transition-colors">Contact Support</a>
+            <div className="hover:text-red-100 transition-colors">
+              <div>Contact Support:</div>
+              <div className="mt-1">
+                <a href="mailto:support@revonn.com" className="hover:underline">📧 support@revonn.com</a>
+              </div>
+              <div>
+                <a href="tel:+916201356269" className="hover:underline">📞 +91 6201356269</a>
+              </div>
+            </div>
           </div>
         </div>
       </footer>
