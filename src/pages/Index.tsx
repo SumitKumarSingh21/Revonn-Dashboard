@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Car, Calendar, MessageSquare, DollarSign, Users, Clock, Shield, Zap } from "lucide-react";
 import TermsAndConditions from "@/components/TermsAndConditions";
+import PrivacyPolicy from "@/components/PrivacyPolicy";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -241,7 +242,9 @@ const Index = () => {
             Complete garage management solution for modern automotive businesses
           </p>
           <div className="flex justify-center space-x-6 text-sm text-red-300">
-            <a href="#" className="hover:text-red-100 transition-colors">Privacy Policy</a>
+            <PrivacyPolicy>
+              <button className="hover:text-red-100 transition-colors">Privacy Policy</button>
+            </PrivacyPolicy>
             <TermsAndConditions>
               <button className="hover:text-red-100 transition-colors">Terms & Conditions</button>
             </TermsAndConditions>
