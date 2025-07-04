@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Car, Calendar, MessageSquare, DollarSign, Users, Clock, Shield, Zap } from "lucide-react";
+import TermsAndConditions from "@/components/TermsAndConditions";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -241,7 +242,9 @@ const Index = () => {
           </p>
           <div className="flex justify-center space-x-6 text-sm text-red-300">
             <a href="#" className="hover:text-red-100 transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-red-100 transition-colors">Terms of Service</a>
+            <TermsAndConditions>
+              <button className="hover:text-red-100 transition-colors">Terms & Conditions</button>
+            </TermsAndConditions>
             <a href="#" className="hover:text-red-100 transition-colors">Contact Support</a>
           </div>
         </div>
