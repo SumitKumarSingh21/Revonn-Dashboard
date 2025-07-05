@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { User } from "@supabase/supabase-js";
 import Sidebar from "@/components/dashboard/Sidebar";
 import BookingsTab from "@/components/dashboard/BookingsTab";
 import ServicesTab from "@/components/dashboard/ServicesTab";
@@ -17,6 +18,7 @@ import TimeSlotManagement from "@/components/dashboard/TimeSlotManagement";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("bookings");
+  const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,8 +29,18 @@ const Dashboard = () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
       navigate("/auth");
+    } else {
+      setUser(session.user);
     }
   };
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -59,7 +71,7 @@ const Dashboard = () => {
               <ReviewsTab />
             </TabsContent>
             <TabsContent value="garage-profile">
-              <GarageProfileTab />
+              <GarageProfileTab user={user} />
             </TabsContent>
             <TabsContent value="notifications">
               <NotificationsTab />
