@@ -49,8 +49,10 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
 
     try {
       const dayOfWeek = selectedDate.getDay();
+      const selectedDateStr = selectedDate.toISOString().split('T')[0];
       
-      const { data, error } = await supabase
+      // Get available time slots for the day
+      const { data: timeSlots, error: timeSlotsError } = await supabase
         .from("garage_time_slots")
         .select("id, start_time, end_time")
         .eq("garage_id", garageId)
@@ -58,8 +60,30 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
         .eq("is_available", true)
         .order("start_time");
 
-      if (error) throw error;
-      setAvailableSlots(data || []);
+      if (timeSlotsError) throw timeSlotsError;
+
+      if (!timeSlots || timeSlots.length === 0) {
+        setAvailableSlots([]);
+        return;
+      }
+
+      // Get already booked slots for the selected date
+      const { data: bookedSlots, error: bookingsError } = await supabase
+        .from("bookings")
+        .select("booking_time")
+        .eq("garage_id", garageId)
+        .eq("booking_date", selectedDateStr)
+        .in("status", ["pending", "confirmed", "in_progress"]);
+
+      if (bookingsError) throw bookingsError;
+
+      // Filter out booked time slots
+      const bookedTimes = bookedSlots?.map(booking => booking.booking_time) || [];
+      const availableTimeSlots = timeSlots.filter(slot => 
+        !bookedTimes.includes(slot.start_time)
+      );
+
+      setAvailableSlots(availableTimeSlots);
     } catch (error) {
       console.error("Error loading time slots:", error);
       toast({

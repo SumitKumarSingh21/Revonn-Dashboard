@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -21,7 +22,7 @@ const TimeSlotManagement = () => {
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [newSlot, setNewSlot] = useState({
-    day_of_week: 1,
+    day_of_week: 0, // Start with Sunday (0)
     start_time: "09:00",
     end_time: "10:00",
   });
