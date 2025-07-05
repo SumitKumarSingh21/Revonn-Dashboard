@@ -1,160 +1,74 @@
 
-import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { Calendar, Car, DollarSign, MessageSquare, Star, User, Wrench, Bell, Zap, Clock, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { 
-  Calendar, 
-  IndianRupee, 
-  Star, 
-  Bell, 
-  Settings, 
-  LogOut, 
-  Menu, 
-  X,
-  Users,
-  Bot,
-  Building2,
-  Wrench
-} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface SidebarProps {
-  stats: {
-    totalBookings: number;
-    totalEarnings: number;
-    activeServices: number;
-    totalReviews: number;
-  };
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
 }
 
-const Sidebar = ({ stats }: SidebarProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
   const navigate = useNavigate();
-  const location = useLocation();
-
-  const menuItems = [
-    { icon: Building2, label: "Garage Profile", value: "garage-profile", count: null },
-    { icon: Calendar, label: "Bookings", value: "bookings", count: stats.totalBookings },
-    { icon: Users, label: "Services", value: "services", count: stats.activeServices },
-    { icon: Wrench, label: "Mechanics", value: "mechanics", count: null },
-    { icon: IndianRupee, label: "Earnings", value: "earnings", count: null },
-    { icon: Star, label: "Reviews", value: "reviews", count: stats.totalReviews },
-    { icon: Bell, label: "Notifications", value: "notifications", count: null },
-    { icon: Bot, label: "Revvy", value: "revvy", count: null },
-  ];
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    navigate("/auth");
+    navigate("/");
   };
 
-  const handleNavigation = (value: string) => {
-    const url = new URL(window.location.href);
-    url.searchParams.set('tab', value);
-    window.history.pushState({}, '', url.toString());
-    window.dispatchEvent(new PopStateEvent('popstate'));
-    setIsOpen(false);
-  };
-
-  const handleSettings = () => {
-    navigate("/settings");
-    setIsOpen(false);
-  };
-
-  const currentTab = new URLSearchParams(location.search).get('tab') || 'garage-profile';
+  const menuItems = [
+    { id: "bookings", label: "Bookings", icon: Calendar },
+    { id: "services", label: "Services", icon: Car },
+    { id: "timeslots", label: "Time Slots", icon: Clock },
+    { id: "mechanics", label: "Mechanics", icon: Wrench },
+    { id: "earnings", label: "Earnings", icon: DollarSign },
+    { id: "messages", label: "Messages", icon: MessageSquare },
+    { id: "reviews", label: "Reviews", icon: Star },
+    { id: "garage-profile", label: "Garage Profile", icon: User },
+    { id: "notifications", label: "Notifications", icon: Bell },
+    { id: "revvy", label: "Revvy", icon: Zap },
+  ];
 
   return (
-    <>
-      {/* Mobile Menu Button */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsOpen(!isOpen)}
-          className="bg-white shadow-md"
-        >
-          {isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-        </Button>
-      </div>
-
-      {/* Overlay for mobile */}
-      {isOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <div className={`
-        fixed lg:static inset-y-0 left-0 z-50
-        w-64 bg-white border-r border-gray-200
-        transform transition-transform duration-300 ease-in-out
-        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        flex flex-col h-screen
-      `}>
-        {/* Header */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center">
-            <img 
-              src="/lovable-uploads/e3aae901-9e81-4067-a6fa-bf32ba3a4167.png" 
-              alt="Revonn Logo" 
-              className="h-8 w-8 mr-3"
-            />
-            <h1 className="text-xl font-semibold text-gray-900">Revonn Dashboard</h1>
+    <div className="fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 shadow-sm">
+      <div className="p-6">
+        <div className="flex items-center mb-8">
+          <img src="/lovable-uploads/f2edf4d2-fb05-49d3-bf90-027c5a657e2a.png" alt="Revonn Logo" className="h-8 w-8 mr-3" />
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">Revonn</h1>
+            <p className="text-xs text-gray-600">Dashboard</p>
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          {menuItems.map((item) => (
-            <button
-              key={item.value}
-              onClick={() => handleNavigation(item.value)}
-              className={`
-                w-full flex items-center justify-between p-3 rounded-lg text-left
-                transition-colors duration-200
-                ${currentTab === item.value 
-                  ? 'bg-blue-50 text-blue-700 border border-blue-200' 
-                  : 'text-gray-700 hover:bg-gray-50'
-                }
-              `}
-            >
-              <div className="flex items-center">
-                <item.icon className="h-5 w-5 mr-3" />
-                <span className="font-medium">{item.label}</span>
-              </div>
-              {item.count !== null && item.count > 0 && (
-                <Badge variant="secondary" className="ml-2">
-                  {item.count}
-                </Badge>
-              )}
-            </button>
-          ))}
+        <nav className="space-y-2">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`w-full flex items-center px-3 py-2 text-left rounded-lg transition-colors ${
+                  activeTab === item.id
+                    ? "bg-blue-50 text-blue-700 border-l-4 border-blue-700"
+                    : "text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                <Icon className="h-5 w-5 mr-3" />
+                {item.label}
+              </button>
+            );
+          })}
         </nav>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-gray-200 space-y-2">
-          <Button
-            variant="ghost"
-            className="w-full justify-start"
-            onClick={handleSettings}
-          >
-            <Settings className="h-4 w-4 mr-3" />
-            Settings
-          </Button>
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
-            onClick={handleSignOut}
-          >
-            <LogOut className="h-4 w-4 mr-3" />
+        <div className="absolute bottom-6 left-6">
+          <Button variant="outline" onClick={handleSignOut} className="w-full">
+            <LogOut className="h-4 w-4 mr-2" />
             Sign Out
           </Button>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

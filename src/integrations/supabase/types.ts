@@ -103,6 +103,30 @@ export type Database = {
           },
         ]
       }
+      comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           created_at: string | null
@@ -317,6 +341,27 @@ export type Database = {
         }
         Relationships: []
       }
+      likes: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       mechanics: {
         Row: {
           created_at: string
@@ -436,7 +481,7 @@ export type Database = {
           created_at: string | null
           id: string
           likes: number | null
-          post_image: string
+          post_image: string | null
           updated_at: string | null
           user_id: string
           user_image: string | null
@@ -448,7 +493,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           likes?: number | null
-          post_image: string
+          post_image?: string | null
           updated_at?: string | null
           user_id: string
           user_image?: string | null
@@ -460,7 +505,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           likes?: number | null
-          post_image?: string
+          post_image?: string | null
           updated_at?: string | null
           user_id?: string
           user_image?: string | null
@@ -612,9 +657,35 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_comment: {
+        Args: { p_post_id: string; p_user_id: string; p_content: string }
+        Returns: undefined
+      }
+      check_user_liked_post: {
+        Args: { p_post_id: string; p_user_id: string }
+        Returns: boolean
+      }
       generate_mechanic_id: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_post_comments: {
+        Args: { p_post_id: string }
+        Returns: {
+          id: string
+          content: string
+          created_at: string
+          user_id: string
+          profiles: Json
+        }[]
+      }
+      like_post: {
+        Args: { p_post_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      unlike_post: {
+        Args: { p_post_id: string; p_user_id: string }
+        Returns: undefined
       }
     }
     Enums: {

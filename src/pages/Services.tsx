@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Car, MapPin, Star, Clock, DollarSign, Search, Phone, Mail } from "lucide-react";
+import BookingModal from "@/components/BookingModal";
 
 interface Service {
   id: string;
@@ -30,6 +31,11 @@ const Services = () => {
   const [garages, setGarages] = useState<Garage[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [bookingModal, setBookingModal] = useState({
+    isOpen: false,
+    garageId: "",
+    serviceName: "",
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -90,8 +96,19 @@ const Services = () => {
   );
 
   const handleBookService = (garageId: string, serviceName: string) => {
-    // Navigate to auth page with booking info
-    navigate(`/auth?redirect=book&garage=${garageId}&service=${encodeURIComponent(serviceName)}`);
+    setBookingModal({
+      isOpen: true,
+      garageId,
+      serviceName,
+    });
+  };
+
+  const closeBookingModal = () => {
+    setBookingModal({
+      isOpen: false,
+      garageId: "",
+      serviceName: "",
+    });
   };
 
   if (loading) {
@@ -272,6 +289,13 @@ const Services = () => {
           </div>
         )}
       </div>
+
+      <BookingModal
+        isOpen={bookingModal.isOpen}
+        onClose={closeBookingModal}
+        garageId={bookingModal.garageId}
+        serviceName={bookingModal.serviceName}
+      />
     </div>
   );
 };
