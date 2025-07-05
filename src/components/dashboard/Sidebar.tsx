@@ -1,5 +1,5 @@
 
-import { Calendar, Car, DollarSign, MessageSquare, Star, User, Wrench, Bell, Zap, Clock, LogOut } from "lucide-react";
+import { Calendar, Car, DollarSign, Star, User, Wrench, Bell, Zap, Clock, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -23,7 +23,6 @@ const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
     { id: "timeslots", label: "Time Slots", icon: Clock },
     { id: "mechanics", label: "Mechanics", icon: Wrench },
     { id: "earnings", label: "Earnings", icon: DollarSign },
-    { id: "messages", label: "Messages", icon: MessageSquare },
     { id: "reviews", label: "Reviews", icon: Star },
     { id: "garage-profile", label: "Garage Profile", icon: User },
     { id: "notifications", label: "Notifications", icon: Bell },

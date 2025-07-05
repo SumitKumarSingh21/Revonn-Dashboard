@@ -8,7 +8,6 @@ import Sidebar from "@/components/dashboard/Sidebar";
 import BookingsTab from "@/components/dashboard/BookingsTab";
 import ServicesTab from "@/components/dashboard/ServicesTab";
 import EarningsTab from "@/components/dashboard/EarningsTab";
-import MessagesTab from "@/components/dashboard/MessagesTab";
 import ReviewsTab from "@/components/dashboard/ReviewsTab";
 import GarageProfileTab from "@/components/dashboard/GarageProfileTab";
 import MechanicsTab from "@/components/dashboard/MechanicsTab";
@@ -63,9 +62,6 @@ const Dashboard = () => {
             </TabsContent>
             <TabsContent value="earnings">
               <EarningsTab />
-            </TabsContent>
-            <TabsContent value="messages">
-              <MessagesTab />
             </TabsContent>
             <TabsContent value="reviews">
               <ReviewsTab />
