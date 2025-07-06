@@ -1,5 +1,5 @@
 
-import { Calendar, Car, DollarSign, Star, User, Wrench, Bell, Zap, Clock, LogOut } from "lucide-react";
+import { Calendar, Car, DollarSign, Star, User, Wrench, Bell, Zap, Clock, LogOut, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -7,14 +7,23 @@ import { useNavigate } from "react-router-dom";
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  isSidebarOpen?: boolean;
+  setIsSidebarOpen?: (open: boolean) => void;
 }
 
-const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
+const Sidebar = ({ activeTab, setActiveTab, isSidebarOpen, setIsSidebarOpen }: SidebarProps) => {
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate("/");
+  };
+
+  const handleTabClick = (tabId: string) => {
+    setActiveTab(tabId);
+    if (setIsSidebarOpen) {
+      setIsSidebarOpen(false);
+    }
   };
 
   const menuItems = [
@@ -30,44 +39,97 @@ const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
   ];
 
   return (
-    <div className="fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 shadow-sm">
-      <div className="p-6">
-        <div className="flex items-center mb-8">
-          <img src="/lovable-uploads/f2edf4d2-fb05-49d3-bf90-027c5a657e2a.png" alt="Revonn Logo" className="h-8 w-8 mr-3" />
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Revonn</h1>
-            <p className="text-xs text-gray-600">Dashboard</p>
+    <>
+      {/* Desktop Sidebar */}
+      <div className="hidden md:block fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 shadow-sm z-30">
+        <div className="p-6">
+          <div className="flex items-center mb-8">
+            <img src="/lovable-uploads/f2edf4d2-fb05-49d3-bf90-027c5a657e2a.png" alt="Revonn Logo" className="h-8 w-8 mr-3" />
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Revonn</h1>
+              <p className="text-xs text-gray-600">Dashboard</p>
+            </div>
+          </div>
+
+          <nav className="space-y-2">
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleTabClick(item.id)}
+                  className={`w-full flex items-center px-3 py-2 text-left rounded-lg transition-colors ${
+                    activeTab === item.id
+                      ? "bg-blue-50 text-blue-700 border-l-4 border-blue-700"
+                      : "text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  <Icon className="h-5 w-5 mr-3" />
+                  {item.label}
+                </button>
+              );
+            })}
+          </nav>
+
+          <div className="absolute bottom-6 left-6 right-6">
+            <Button variant="outline" onClick={handleSignOut} className="w-full">
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
           </div>
         </div>
+      </div>
 
-        <nav className="space-y-2">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center px-3 py-2 text-left rounded-lg transition-colors ${
-                  activeTab === item.id
-                    ? "bg-blue-50 text-blue-700 border-l-4 border-blue-700"
-                    : "text-gray-600 hover:bg-gray-50"
-                }`}
-              >
-                <Icon className="h-5 w-5 mr-3" />
-                {item.label}
-              </button>
-            );
-          })}
-        </nav>
+      {/* Mobile Sidebar */}
+      <div className={`md:hidden fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 shadow-lg z-50 transform transition-transform duration-300 ease-in-out ${
+        isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center">
+              <img src="/lovable-uploads/f2edf4d2-fb05-49d3-bf90-027c5a657e2a.png" alt="Revonn Logo" className="h-8 w-8 mr-3" />
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">Revonn</h1>
+                <p className="text-xs text-gray-600">Dashboard</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsSidebarOpen?.(false)}
+              className="p-1 rounded-md hover:bg-gray-100"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
 
-        <div className="absolute bottom-6 left-6">
-          <Button variant="outline" onClick={handleSignOut} className="w-full">
-            <LogOut className="h-4 w-4 mr-2" />
-            Sign Out
-          </Button>
+          <nav className="space-y-2">
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleTabClick(item.id)}
+                  className={`w-full flex items-center px-3 py-2 text-left rounded-lg transition-colors ${
+                    activeTab === item.id
+                      ? "bg-blue-50 text-blue-700 border-l-4 border-blue-700"
+                      : "text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  <Icon className="h-5 w-5 mr-3" />
+                  {item.label}
+                </button>
+              );
+            })}
+          </nav>
+
+          <div className="absolute bottom-6 left-6 right-6">
+            <Button variant="outline" onClick={handleSignOut} className="w-full">
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

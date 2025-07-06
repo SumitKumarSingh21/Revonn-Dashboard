@@ -18,6 +18,7 @@ import TimeSlotManagement from "@/components/dashboard/TimeSlotManagement";
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("bookings");
   const [user, setUser] = useState<User | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -42,11 +43,37 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+    <div className="min-h-screen bg-gray-50 flex relative">
+      <Sidebar 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab}
+        isSidebarOpen={isSidebarOpen}
+        setIsSidebarOpen={setIsSidebarOpen}
+      />
       
-      <div className="flex-1 ml-64">
-        <div className="p-8">
+      {/* Overlay for mobile */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+      
+      <div className="flex-1 w-full md:ml-64">
+        <div className="p-4 md:p-8">
+          {/* Mobile header with menu button */}
+          <div className="flex items-center justify-between mb-6 md:hidden">
+            <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="p-2 rounded-md bg-white border border-gray-200 shadow-sm"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsContent value="bookings">
               <BookingsTab />
