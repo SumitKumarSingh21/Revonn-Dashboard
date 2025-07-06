@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User } from "@supabase/supabase-js";
+import { useLanguage } from "@/contexts/LanguageContext";
 import Sidebar from "@/components/dashboard/Sidebar";
 import BookingsTab from "@/components/dashboard/BookingsTab";
 import ServicesTab from "@/components/dashboard/ServicesTab";
@@ -20,6 +21,7 @@ const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   useEffect(() => {
     checkUser();
@@ -63,7 +65,7 @@ const Dashboard = () => {
         <div className="p-4 md:p-8">
           {/* Mobile header with menu button */}
           <div className="flex items-center justify-between mb-6 md:hidden">
-            <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
+            <h1 className="text-xl font-bold text-gray-900">{t('dashboard')}</h1>
             <button
               onClick={() => setIsSidebarOpen(true)}
               className="p-2 rounded-md bg-white border border-gray-200 shadow-sm"

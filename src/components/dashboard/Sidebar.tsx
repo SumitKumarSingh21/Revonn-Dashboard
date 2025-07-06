@@ -3,6 +3,7 @@ import { Calendar, Car, DollarSign, Star, User, Wrench, Bell, Zap, Clock, LogOut
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface SidebarProps {
   activeTab: string;
@@ -13,6 +14,7 @@ interface SidebarProps {
 
 const Sidebar = ({ activeTab, setActiveTab, isSidebarOpen, setIsSidebarOpen }: SidebarProps) => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -31,16 +33,16 @@ const Sidebar = ({ activeTab, setActiveTab, isSidebarOpen, setIsSidebarOpen }: S
   };
 
   const menuItems = [
-    { id: "bookings", label: "Bookings", icon: Calendar },
-    { id: "services", label: "Services", icon: Car },
-    { id: "timeslots", label: "Time Slots", icon: Clock },
-    { id: "mechanics", label: "Mechanics", icon: Wrench },
-    { id: "earnings", label: "Earnings", icon: DollarSign },
-    { id: "reviews", label: "Reviews", icon: Star },
-    { id: "garage-profile", label: "Garage Profile", icon: User },
-    { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "revvy", label: "Revvy", icon: Zap },
-    { id: "settings", label: "Settings", icon: Settings },
+    { id: "bookings", label: t("bookings"), icon: Calendar },
+    { id: "services", label: t("services"), icon: Car },
+    { id: "timeslots", label: t("timeSlots"), icon: Clock },
+    { id: "mechanics", label: t("mechanics"), icon: Wrench },
+    { id: "earnings", label: t("earnings"), icon: DollarSign },
+    { id: "reviews", label: t("reviews"), icon: Star },
+    { id: "garage-profile", label: t("garageProfile"), icon: User },
+    { id: "notifications", label: t("notifications"), icon: Bell },
+    { id: "revvy", label: t("revvy"), icon: Zap },
+    { id: "settings", label: t("settings"), icon: Settings },
   ];
 
   return (
@@ -52,7 +54,7 @@ const Sidebar = ({ activeTab, setActiveTab, isSidebarOpen, setIsSidebarOpen }: S
             <img src="/lovable-uploads/f2edf4d2-fb05-49d3-bf90-027c5a657e2a.png" alt="Revonn Logo" className="h-8 w-8 mr-3" />
             <div>
               <h1 className="text-xl font-bold text-gray-900">Revonn</h1>
-              <p className="text-xs text-gray-600">Dashboard</p>
+              <p className="text-xs text-gray-600">{t('dashboard')}</p>
             </div>
           </div>
 
@@ -79,7 +81,7 @@ const Sidebar = ({ activeTab, setActiveTab, isSidebarOpen, setIsSidebarOpen }: S
           <div className="absolute bottom-6 left-6 right-6">
             <Button variant="outline" onClick={handleSignOut} className="w-full">
               <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
+              {t('signOut')}
             </Button>
           </div>
         </div>
@@ -95,7 +97,7 @@ const Sidebar = ({ activeTab, setActiveTab, isSidebarOpen, setIsSidebarOpen }: S
               <img src="/lovable-uploads/f2edf4d2-fb05-49d3-bf90-027c5a657e2a.png" alt="Revonn Logo" className="h-8 w-8 mr-3" />
               <div>
                 <h1 className="text-xl font-bold text-gray-900">Revonn</h1>
-                <p className="text-xs text-gray-600">Dashboard</p>
+                <p className="text-xs text-gray-600">{t('dashboard')}</p>
               </div>
             </div>
             <button
@@ -129,7 +131,7 @@ const Sidebar = ({ activeTab, setActiveTab, isSidebarOpen, setIsSidebarOpen }: S
           <div className="absolute bottom-6 left-6 right-6">
             <Button variant="outline" onClick={handleSignOut} className="w-full">
               <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
+              {t('signOut')}
             </Button>
           </div>
         </div>
