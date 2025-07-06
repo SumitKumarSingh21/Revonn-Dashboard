@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, User, Bell, Shield, Palette, Database, Trash2 } from "lucide-react";
+import { ArrowLeft, User, Bell, Shield, Palette, Database, Trash2, Globe } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,12 +22,20 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const Settings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [language, setLanguage] = useState("en");
   const [profile, setProfile] = useState({
     full_name: "",
     username: "",
@@ -50,6 +58,116 @@ const Settings = () => {
   
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Translations object
+  const translations = {
+    en: {
+      settings: "Settings",
+      manageAccount: "Manage your account and preferences",
+      backToDashboard: "Back to Dashboard",
+      profileInformation: "Profile Information",
+      updatePersonal: "Update your personal information and profile details",
+      fullName: "Full Name",
+      enterFullName: "Enter your full name",
+      username: "Username",
+      enterUsername: "Enter your username",
+      bio: "Bio",
+      tellAboutYourself: "Tell us about yourself",
+      phoneNumber: "Phone Number",
+      enterPhoneNumber: "Enter your phone number",
+      location: "Location",
+      enterLocation: "Enter your location",
+      saveProfile: "Save Profile",
+      saving: "Saving...",
+      languagePreferences: "Language Preferences",
+      selectLanguage: "Select your preferred language",
+      english: "English",
+      hindi: "हिंदी",
+      notificationPreferences: "Notification Preferences",
+      manageNotifications: "Manage how you receive notifications",
+      emailNotifications: "Email Notifications",
+      receiveViaEmail: "Receive notifications via email",
+      bookingNotifications: "Booking Notifications",
+      newBookings: "Get notified about new bookings",
+      paymentNotifications: "Payment Notifications",
+      getPaymentNotified: "Get notified about payments",
+      reviewNotifications: "Review Notifications",
+      newReviews: "Get notified about new reviews",
+      accountActions: "Account Actions",
+      manageSecurity: "Manage your account security and sessions",
+      signOut: "Sign Out",
+      dangerZone: "Danger Zone",
+      deleteWarning: "Once you delete your profile, there is no going back. Please be certain.",
+      deleteProfile: "Delete Profile",
+      confirmDelete: "Are you absolutely sure?",
+      deleteDescription: "This action cannot be undone. This will permanently delete your account and remove all your data from our servers including your profile, bookings, and any other associated information.",
+      cancel: "Cancel",
+      yesDelete: "Yes, delete my profile",
+      deleting: "Deleting...",
+      success: "Success",
+      profileUpdated: "Profile updated successfully",
+      error: "Error",
+      failedUpdate: "Failed to update profile",
+      accountDeleted: "Account Deleted",
+      profileDeleted: "Your profile has been permanently deleted",
+      failedDelete: "Failed to delete profile. Please try again.",
+      failedSignOut: "Failed to sign out"
+    },
+    hi: {
+      settings: "सेटिंग्स",
+      manageAccount: "अपने खाते और प्राथमिकताओं को प्रबंधित करें",
+      backToDashboard: "डैशबोर्ड पर वापस जाएं",
+      profileInformation: "प्रोफ़ाइल जानकारी",
+      updatePersonal: "अपनी व्यक्तिगत जानकारी और प्रोफ़ाइल विवरण अपडेट करें",
+      fullName: "पूरा नाम",
+      enterFullName: "अपना पूरा नाम दर्ज करें",
+      username: "उपयोगकर्ता नाम",
+      enterUsername: "अपना उपयोगकर्ता नाम दर्ज करें",
+      bio: "बायो",
+      tellAboutYourself: "हमें अपने बारे में बताएं",
+      phoneNumber: "फ़ोन नंबर",
+      enterPhoneNumber: "अपना फ़ोन नंबर दर्ज करें",
+      location: "स्थान",
+      enterLocation: "अपना स्थान दर्ज करें",
+      saveProfile: "प्रोफ़ाइल सेव करें",
+      saving: "सेव हो रहा है...",
+      languagePreferences: "भाषा प्राथमिकताएं",
+      selectLanguage: "अपनी पसंदीदा भाषा चुनें",
+      english: "English",
+      hindi: "हिंदी",
+      notificationPreferences: "अधिसूचना प्राथमिकताएं",
+      manageNotifications: "अधिसूचनाएं कैसे प्राप्त करें इसे प्रबंधित करें",
+      emailNotifications: "ईमेल अधिसूचनाएं",
+      receiveViaEmail: "ईमेल के माध्यम से अधिसूचनाएं प्राप्त करें",
+      bookingNotifications: "बुकिंग अधिसूचनाएं",
+      newBookings: "नई बुकिंग के बारे में सूचित रहें",
+      paymentNotifications: "भुगतान अधिसूचनाएं",
+      getPaymentNotified: "भुगतान के बारे में सूचित रहें",
+      reviewNotifications: "समीक्षा अधिसूचनाएं",
+      newReviews: "नई समीक्षाओं के बारे में सूचित रहें",
+      accountActions: "खाता कार्रवाई",
+      manageSecurity: "अपने खाते की सुरक्षा और सत्रों को प्रबंधित करें",
+      signOut: "साइन आउट",
+      dangerZone: "खतरे का क्षेत्र",
+      deleteWarning: "एक बार जब आप अपनी प्रोफ़ाइल हटा देते हैं, तो वापसी नहीं है। कृपया निश्चित रहें।",
+      deleteProfile: "प्रोफ़ाइल हटाएं",
+      confirmDelete: "क्या आप बिल्कुल निश्चित हैं?",
+      deleteDescription: "यह कार्रवाई पूर्ववत नहीं की जा सकती। यह स्थायी रूप से आपके खाते को हटा देगा और हमारे सर्वर से आपका सभी डेटा हटा देगा जिसमें आपकी प्रोफ़ाइल, बुकिंग और कोई अन्य संबंधित जानकारी शामिल है।",
+      cancel: "रद्द करें",
+      yesDelete: "हां, मेरी प्रोफ़ाइल हटाएं",
+      deleting: "हटाया जा रहा है...",
+      success: "सफलता",
+      profileUpdated: "प्रोफ़ाइल सफलतापूर्वक अपडेट की गई",
+      error: "त्रुटि",
+      failedUpdate: "प्रोफ़ाइल अपडेट करने में विफल",
+      accountDeleted: "खाता हटा दिया गया",
+      profileDeleted: "आपकी प्रोफ़ाइल स्थायी रूप से हटा दी गई है",
+      failedDelete: "प्रोफ़ाइल हटाने में विफल। कृपया पुनः प्रयास करें।",
+      failedSignOut: "साइन आउट करने में विफल"
+    }
+  };
+
+  const t = translations[language as keyof typeof translations];
 
   useEffect(() => {
     checkUser();
@@ -114,14 +232,14 @@ const Settings = () => {
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Profile updated successfully",
+        title: t.success,
+        description: t.profileUpdated,
       });
     } catch (error) {
       console.error("Error saving profile:", error);
       toast({
-        title: "Error",
-        description: "Failed to update profile",
+        title: t.error,
+        description: t.failedUpdate,
         variant: "destructive",
       });
     } finally {
@@ -147,16 +265,16 @@ const Settings = () => {
       }
 
       toast({
-        title: "Account Deleted",
-        description: "Your profile has been permanently deleted",
+        title: t.accountDeleted,
+        description: t.profileDeleted,
       });
       
       navigate("/");
     } catch (error) {
       console.error("Error deleting profile:", error);
       toast({
-        title: "Error",
-        description: "Failed to delete profile. Please try again.",
+        title: t.error,
+        description: t.failedDelete,
         variant: "destructive",
       });
     } finally {
@@ -172,8 +290,8 @@ const Settings = () => {
     } catch (error) {
       console.error("Error signing out:", error);
       toast({
-        title: "Error",
-        description: "Failed to sign out",
+        title: t.error,
+        description: t.failedSignOut,
         variant: "destructive",
       });
     }
@@ -201,13 +319,13 @@ const Settings = () => {
                 className="mr-4"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
+                {t.backToDashboard}
               </Button>
               <div className="flex items-center">
                 <img src="/lovable-uploads/f2edf4d2-fb05-49d3-bf90-027c5a657e2a.png" alt="Revonn Logo" className="h-8 w-8 mr-3" />
                 <div>
-                  <h1 className="text-lg font-semibold">Settings</h1>
-                  <p className="text-sm text-gray-600">Manage your account and preferences</p>
+                  <h1 className="text-lg font-semibold">{t.settings}</h1>
+                  <p className="text-sm text-gray-600">{t.manageAccount}</p>
                 </div>
               </div>
             </div>
@@ -217,74 +335,101 @@ const Settings = () => {
 
       <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="space-y-8">
+          {/* Language Preferences */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center">
+                <Globe className="h-5 w-5 mr-2" />
+                <CardTitle>{t.languagePreferences}</CardTitle>
+              </div>
+              <CardDescription>
+                {t.selectLanguage}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Label htmlFor="language">Language</Label>
+                <Select value={language} onValueChange={setLanguage}>
+                  <SelectTrigger className="w-full md:w-[200px]">
+                    <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en">{t.english}</SelectItem>
+                    <SelectItem value="hi">{t.hindi}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Profile Settings */}
           <Card>
             <CardHeader>
               <div className="flex items-center">
                 <User className="h-5 w-5 mr-2" />
-                <CardTitle>Profile Information</CardTitle>
+                <CardTitle>{t.profileInformation}</CardTitle>
               </div>
               <CardDescription>
-                Update your personal information and profile details
+                {t.updatePersonal}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="full_name">Full Name</Label>
+                  <Label htmlFor="full_name">{t.fullName}</Label>
                   <Input
                     id="full_name"
                     value={profile.full_name}
                     onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
-                    placeholder="Enter your full name"
+                    placeholder={t.enterFullName}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
+                  <Label htmlFor="username">{t.username}</Label>
                   <Input
                     id="username"
                     value={profile.username}
                     onChange={(e) => setProfile({ ...profile, username: e.target.value })}
-                    placeholder="Enter your username"
+                    placeholder={t.enterUsername}
                   />
                 </div>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="bio">Bio</Label>
+                <Label htmlFor="bio">{t.bio}</Label>
                 <Textarea
                   id="bio"
                   value={profile.bio}
                   onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                  placeholder="Tell us about yourself"
+                  placeholder={t.tellAboutYourself}
                   rows={3}
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
+                  <Label htmlFor="phone">{t.phoneNumber}</Label>
                   <Input
                     id="phone"
                     value={profile.phone}
                     onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                    placeholder="Enter your phone number"
+                    placeholder={t.enterPhoneNumber}
                     type="tel"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
+                  <Label htmlFor="location">{t.location}</Label>
                   <Input
                     id="location"
                     value={profile.location}
                     onChange={(e) => setProfile({ ...profile, location: e.target.value })}
-                    placeholder="Enter your location"
+                    placeholder={t.enterLocation}
                   />
                 </div>
               </div>
 
               <Button onClick={saveProfile} disabled={saving} className="w-full md:w-auto">
-                {saving ? "Saving..." : "Save Profile"}
+                {saving ? t.saving : t.saveProfile}
               </Button>
             </CardContent>
           </Card>
@@ -294,18 +439,18 @@ const Settings = () => {
             <CardHeader>
               <div className="flex items-center">
                 <Bell className="h-5 w-5 mr-2" />
-                <CardTitle>Notification Preferences</CardTitle>
+                <CardTitle>{t.notificationPreferences}</CardTitle>
               </div>
               <CardDescription>
-                Manage how you receive notifications
+                {t.manageNotifications}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label htmlFor="email_notifications">Email Notifications</Label>
-                    <p className="text-sm text-gray-500">Receive notifications via email</p>
+                    <Label htmlFor="email_notifications">{t.emailNotifications}</Label>
+                    <p className="text-sm text-gray-500">{t.receiveViaEmail}</p>
                   </div>
                   <Switch
                     id="email_notifications"
@@ -320,8 +465,8 @@ const Settings = () => {
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label htmlFor="booking_notifications">Booking Notifications</Label>
-                    <p className="text-sm text-gray-500">Get notified about new bookings</p>
+                    <Label htmlFor="booking_notifications">{t.bookingNotifications}</Label>
+                    <p className="text-sm text-gray-500">{t.newBookings}</p>
                   </div>
                   <Switch
                     id="booking_notifications"
@@ -336,8 +481,8 @@ const Settings = () => {
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label htmlFor="payment_notifications">Payment Notifications</Label>
-                    <p className="text-sm text-gray-500">Get notified about payments</p>
+                    <Label htmlFor="payment_notifications">{t.paymentNotifications}</Label>
+                    <p className="text-sm text-gray-500">{t.getPaymentNotified}</p>
                   </div>
                   <Switch
                     id="payment_notifications"
@@ -352,8 +497,8 @@ const Settings = () => {
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label htmlFor="review_notifications">Review Notifications</Label>
-                    <p className="text-sm text-gray-500">Get notified about new reviews</p>
+                    <Label htmlFor="review_notifications">{t.reviewNotifications}</Label>
+                    <p className="text-sm text-gray-500">{t.newReviews}</p>
                   </div>
                   <Switch
                     id="review_notifications"
@@ -372,10 +517,10 @@ const Settings = () => {
             <CardHeader>
               <div className="flex items-center">
                 <Shield className="h-5 w-5 mr-2" />
-                <CardTitle>Account Actions</CardTitle>
+                <CardTitle>{t.accountActions}</CardTitle>
               </div>
               <CardDescription>
-                Manage your account security and sessions
+                {t.manageSecurity}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -385,39 +530,37 @@ const Settings = () => {
                   onClick={handleSignOut}
                   className="w-full md:w-auto"
                 >
-                  Sign Out
+                  {t.signOut}
                 </Button>
 
                 <div className="pt-4 border-t">
-                  <h3 className="text-lg font-medium text-red-600 mb-2">Danger Zone</h3>
+                  <h3 className="text-lg font-medium text-red-600 mb-2">{t.dangerZone}</h3>
                   <p className="text-sm text-gray-600 mb-4">
-                    Once you delete your profile, there is no going back. Please be certain.
+                    {t.deleteWarning}
                   </p>
                   
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button variant="destructive" className="w-full md:w-auto">
                         <Trash2 className="h-4 w-4 mr-2" />
-                        Delete Profile
+                        {t.deleteProfile}
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogTitle>{t.confirmDelete}</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete your account
-                          and remove all your data from our servers including your profile, bookings,
-                          and any other associated information.
+                          {t.deleteDescription}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={deleteProfile}
                           disabled={deleting}
                           className="bg-red-600 hover:bg-red-700"
                         >
-                          {deleting ? "Deleting..." : "Yes, delete my profile"}
+                          {deleting ? t.deleting : t.yesDelete}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
