@@ -10,11 +10,23 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, User, Bell, Shield, Palette, Database } from "lucide-react";
+import { ArrowLeft, User, Bell, Shield, Palette, Database, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const Settings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState({
     full_name: "",
@@ -114,6 +126,41 @@ const Settings = () => {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const deleteProfile = async () => {
+    if (!user) return;
+    
+    setDeleting(true);
+    try {
+      // Delete user account from auth (this will cascade delete profile due to foreign key)
+      const { error } = await supabase.auth.admin.deleteUser(user.id);
+      
+      if (error) {
+        // If admin delete fails, try to delete profile and sign out
+        await supabase.from("profiles").delete().eq("id", user.id);
+        await supabase.auth.signOut();
+      } else {
+        // Sign out after successful deletion
+        await supabase.auth.signOut();
+      }
+
+      toast({
+        title: "Account Deleted",
+        description: "Your profile has been permanently deleted",
+      });
+      
+      navigate("/");
+    } catch (error) {
+      console.error("Error deleting profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete profile. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -340,6 +387,42 @@ const Settings = () => {
                 >
                   Sign Out
                 </Button>
+
+                <div className="pt-4 border-t">
+                  <h3 className="text-lg font-medium text-red-600 mb-2">Danger Zone</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Once you delete your profile, there is no going back. Please be certain.
+                  </p>
+                  
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" className="w-full md:w-auto">
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Profile
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete your account
+                          and remove all your data from our servers including your profile, bookings,
+                          and any other associated information.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={deleteProfile}
+                          disabled={deleting}
+                          className="bg-red-600 hover:bg-red-700"
+                        >
+                          {deleting ? "Deleting..." : "Yes, delete my profile"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </div>
             </CardContent>
           </Card>

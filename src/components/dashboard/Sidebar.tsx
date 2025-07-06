@@ -1,5 +1,5 @@
 
-import { Calendar, Car, DollarSign, Star, User, Wrench, Bell, Zap, Clock, LogOut, X } from "lucide-react";
+import { Calendar, Car, DollarSign, Star, User, Wrench, Bell, Zap, Clock, LogOut, X, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -20,7 +20,11 @@ const Sidebar = ({ activeTab, setActiveTab, isSidebarOpen, setIsSidebarOpen }: S
   };
 
   const handleTabClick = (tabId: string) => {
-    setActiveTab(tabId);
+    if (tabId === "settings") {
+      navigate("/settings");
+    } else {
+      setActiveTab(tabId);
+    }
     if (setIsSidebarOpen) {
       setIsSidebarOpen(false);
     }
@@ -36,6 +40,7 @@ const Sidebar = ({ activeTab, setActiveTab, isSidebarOpen, setIsSidebarOpen }: S
     { id: "garage-profile", label: "Garage Profile", icon: User },
     { id: "notifications", label: "Notifications", icon: Bell },
     { id: "revvy", label: "Revvy", icon: Zap },
+    { id: "settings", label: "Settings", icon: Settings },
   ];
 
   return (
