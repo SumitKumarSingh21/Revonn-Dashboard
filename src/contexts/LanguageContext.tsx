@@ -70,16 +70,7 @@ const translations = {
     reviews: "Reviews",
     garageProfile: "Garage Profile",
     notifications: "Notifications",
-    revvy: "Revvy",
-    // Main dashboard content translations
-    manageCustomerBookings: "Manage customer appointments and mechanic assignments",
-    status: "Status",
-    message: "Message",
-    assignedMechanic: "Assigned Mechanic",
-    assignedOn: "Assigned on",
-    mechanicAssignment: "Mechanic Assignment",
-    completed: "completed",
-    confirmed: "confirmed"
+    revvy: "Revvy"
   },
   hi: {
     settings: "सेटिंग्स",
@@ -141,16 +132,7 @@ const translations = {
     reviews: "समीक्षाएं",
     garageProfile: "गैराज प्रोफ़ाइल",
     notifications: "अधिसूचनाएं",
-    revvy: "रेवी",
-    // Main dashboard content translations
-    manageCustomerBookings: "ग्राहक नियुक्तियों और मैकेनिक असाइनमेंट को प्रबंधित करें",
-    status: "स्थिति",
-    message: "संदेश",
-    assignedMechanic: "असाइन मैकेनिक",
-    assignedOn: "असाइन किया गया",
-    mechanicAssignment: "मैकेनिक असाइनमेंट",
-    completed: "पूर्ण",
-    confirmed: "पुष्ट"
+    revvy: "रेवी"
   }
 };
 

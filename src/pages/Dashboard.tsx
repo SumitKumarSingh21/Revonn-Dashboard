@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User } from "@supabase/supabase-js";
 import { useLanguage } from "@/contexts/LanguageContext";
 import Sidebar from "@/components/dashboard/Sidebar";
-import BookingsTabContent from "@/components/dashboard/BookingsTabContent";
+import BookingsTab from "@/components/dashboard/BookingsTab";
 import ServicesTab from "@/components/dashboard/ServicesTab";
 import EarningsTab from "@/components/dashboard/EarningsTab";
 import ReviewsTab from "@/components/dashboard/ReviewsTab";
@@ -78,7 +78,7 @@ const Dashboard = () => {
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsContent value="bookings">
-              <BookingsTabContent />
+              <BookingsTab />
             </TabsContent>
             <TabsContent value="services">
               <ServicesTab />
