@@ -138,17 +138,120 @@ const Settings = () => {
     
     setDeleting(true);
     try {
-      // Delete user account from auth (this will cascade delete profile due to foreign key)
-      const { error } = await supabase.auth.admin.deleteUser(user.id);
-      
-      if (error) {
-        // If admin delete fails, try to delete profile and sign out
-        await supabase.from("profiles").delete().eq("id", user.id);
-        await supabase.auth.signOut();
-      } else {
-        // Sign out after successful deletion
-        await supabase.auth.signOut();
+      // First, delete the user's garage and all related data
+      const { data: garages } = await supabase
+        .from("garages")
+        .select("id")
+        .eq("owner_id", user.id);
+
+      if (garages && garages.length > 0) {
+        for (const garage of garages) {
+          // Delete garage services
+          await supabase
+            .from("services")
+            .delete()
+            .eq("garage_id", garage.id);
+
+          // Delete garage time slots
+          await supabase
+            .from("garage_time_slots")
+            .delete()
+            .eq("garage_id", garage.id);
+
+          // Delete garage mechanics
+          await supabase
+            .from("mechanics")
+            .delete()
+            .eq("garage_id", garage.id);
+
+          // Delete garage earnings
+          await supabase
+            .from("earnings")
+            .delete()
+            .eq("garage_id", garage.id);
+
+          // Delete garage reviews
+          await supabase
+            .from("reviews")
+            .delete()
+            .eq("garage_id", garage.id);
+
+          // Finally delete the garage itself
+          await supabase
+            .from("garages")
+            .delete()
+            .eq("id", garage.id);
+        }
       }
+
+      // Delete user's bookings
+      await supabase
+        .from("bookings")
+        .delete()
+        .eq("user_id", user.id);
+
+      // Delete user's posts
+      await supabase
+        .from("posts")
+        .delete()
+        .eq("user_id", user.id);
+
+      // Delete user's comments
+      await supabase
+        .from("comments")
+        .delete()
+        .eq("user_id", user.id);
+
+      // Delete user's likes
+      await supabase
+        .from("likes")
+        .delete()
+        .eq("user_id", user.id);
+
+      // Delete user's saved posts
+      await supabase
+        .from("saved_posts")
+        .delete()
+        .eq("user_id", user.id);
+
+      // Delete user's followers/following relationships
+      await supabase
+        .from("followers")
+        .delete()
+        .or(`follower_id.eq.${user.id},following_id.eq.${user.id}`);
+
+      // Delete user's notifications
+      await supabase
+        .from("notifications")
+        .delete()
+        .eq("user_id", user.id);
+
+      // Delete user's messages
+      await supabase
+        .from("messages")
+        .delete()
+        .eq("sender_id", user.id);
+
+      // Delete user's conversations
+      await supabase
+        .from("conversations")
+        .delete()
+        .or(`participant_1.eq.${user.id},participant_2.eq.${user.id}`);
+
+      // Delete user's direct messages
+      await supabase
+        .from("direct_messages")
+        .delete()
+        .eq("sender_id", user.id);
+
+      // Delete user profile
+      await supabase
+        .from("profiles")
+        .delete()
+        .eq("id", user.id);
+
+      // Sign out the user (this will effectively delete the auth user session)
+      await supabase.auth.signOut();
 
       toast({
         title: t('accountDeleted'),
