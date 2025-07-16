@@ -49,7 +49,7 @@ const Index = () => {
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <div className="mb-8">
-            <div className="inline-flex items-center justify-center p-2 bg-red-100 rounded-full mb-4">
+            <div className="inline-flex items-center justify-center p-2 rounded-full mb-4 bg-slate-50">
               <img src="/lovable-uploads/f2edf4d2-fb05-49d3-bf90-027c5a657e2a.png" alt="Revonn Logo" className="h-12 w-12" />
             </div>
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
