@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,23 +6,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Car, Calendar, MessageSquare, DollarSign, Users, Clock, Shield, Zap } from "lucide-react";
 import TermsAndConditions from "@/components/TermsAndConditions";
 import PrivacyPolicy from "@/components/PrivacyPolicy";
-
 const Index = () => {
   const navigate = useNavigate();
-
   useEffect(() => {
     checkUser();
   }, []);
-
   const checkUser = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: {
+        session
+      }
+    } = await supabase.auth.getSession();
     if (session?.user) {
       navigate("/dashboard");
     }
   };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+  return <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm border-b sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -199,7 +197,7 @@ const Index = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-blue-600">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-red-600">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
             Ready to Transform Your Garage Management?
@@ -208,20 +206,10 @@ const Index = () => {
             Join hundreds of garage owners who have streamlined their operations with our platform
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg" 
-              variant="secondary" 
-              onClick={() => navigate("/auth")}
-              className="text-lg px-8 py-3"
-            >
+            <Button size="lg" variant="secondary" onClick={() => navigate("/auth")} className="text-lg px-8 py-3">
               Get Started for Free
             </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              onClick={() => navigate("/services")}
-              className="text-lg px-8 py-3 bg-transparent border-white text-white hover:bg-white hover:text-blue-600"
-            >
+            <Button size="lg" variant="outline" onClick={() => navigate("/services")} className="text-lg px-8 py-3 bg-transparent border-white text-white hover:bg-white hover:text-blue-600">
               Find Services Near You
             </Button>
           </div>
@@ -229,7 +217,7 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-red-900 text-white py-12 px-4 sm:px-6 lg:px-8">
+      <footer className="text-white py-12 px-4 sm:px-6 lg:px-8 bg-red-600">
         <div className="max-w-7xl mx-auto text-center">
           <div className="flex items-center justify-center mb-6">
             <img src="/lovable-uploads/abba9adf-0296-4e5e-a02b-8c714c4c5306.png" alt="Revonn Logo" className="h-12 w-12 mr-3" />
@@ -260,8 +248,6 @@ const Index = () => {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
