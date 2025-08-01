@@ -8,19 +8,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
-import { Clock, User, Phone, Mail, Car, Loader2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Clock, User, Phone, Mail, Car, Loader2, Package } from "lucide-react";
 
 interface TimeSlot {
   id: string;
   start_time: string;
   end_time: string;
+  source: 'predefined' | 'custom';
+}
+
+interface Service {
+  id: string;
+  name: string;
+  price: number;
+  duration: number;
 }
 
 interface BookingModalProps {
   isOpen: boolean;
   onClose: () => void;
   garageId: string;
-  serviceName: string;
+  serviceName?: string;
 }
 
 const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalProps) => {
@@ -28,6 +37,8 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<string>("");
   const [loadingSlots, setLoadingSlots] = useState(false);
+  const [services, setServices] = useState<Service[]>([]);
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [customerInfo, setCustomerInfo] = useState({
     name: "",
     phone: "",
@@ -40,6 +51,12 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
   const { toast } = useToast();
 
   useEffect(() => {
+    if (isOpen) {
+      loadServices();
+    }
+  }, [isOpen, garageId]);
+
+  useEffect(() => {
     if (selectedDate && garageId) {
       loadAvailableTimeSlots();
     } else {
@@ -47,6 +64,34 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
       setSelectedSlot("");
     }
   }, [selectedDate, garageId]);
+
+  const loadServices = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("services")
+        .select("*")
+        .eq("garage_id", garageId);
+
+      if (error) throw error;
+      
+      setServices(data || []);
+      
+      // If serviceName is provided, pre-select it
+      if (serviceName && data) {
+        const service = data.find(s => s.name === serviceName);
+        if (service) {
+          setSelectedServices([service.id]);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading services:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load services",
+        variant: "destructive",
+      });
+    }
+  };
 
   const loadAvailableTimeSlots = async () => {
     if (!selectedDate) return;
@@ -58,8 +103,19 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
       
       console.log('Loading time slots for:', { dayOfWeek, selectedDateStr, garageId });
       
-      // Get available time slots for the day
-      const { data: timeSlots, error: timeSlotsError } = await supabase
+      // Get predefined time slots
+      const { data: predefinedSlots, error: predefinedError } = await supabase
+        .from("predefined_time_slots")
+        .select("id, start_time, end_time")
+        .eq("garage_id", garageId)
+        .eq("day_of_week", dayOfWeek)
+        .eq("is_available", true)
+        .order("start_time");
+
+      if (predefinedError) throw predefinedError;
+
+      // Get custom time slots
+      const { data: customSlots, error: customError } = await supabase
         .from("garage_time_slots")
         .select("id, start_time, end_time")
         .eq("garage_id", garageId)
@@ -67,19 +123,15 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
         .eq("is_available", true)
         .order("start_time");
 
-      if (timeSlotsError) {
-        console.error('Error fetching time slots:', timeSlotsError);
-        throw timeSlotsError;
-      }
+      if (customError) throw customError;
 
-      console.log('Time slots fetched:', timeSlots);
+      // Combine all slots
+      const allSlots = [
+        ...(predefinedSlots || []).map(slot => ({ ...slot, source: 'predefined' as const })),
+        ...(customSlots || []).map(slot => ({ ...slot, source: 'custom' as const }))
+      ];
 
-      if (!timeSlots || timeSlots.length === 0) {
-        setAvailableSlots([]);
-        return;
-      }
-
-      // Get already booked slots for the selected date
+      // Get already booked slots
       const { data: bookedSlots, error: bookingsError } = await supabase
         .from("bookings")
         .select("booking_time")
@@ -87,16 +139,11 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
         .eq("booking_date", selectedDateStr)
         .in("status", ["pending", "confirmed", "in_progress"]);
 
-      if (bookingsError) {
-        console.error('Error fetching booked slots:', bookingsError);
-        throw bookingsError;
-      }
-
-      console.log('Booked slots:', bookedSlots);
+      if (bookingsError) throw bookingsError;
 
       // Filter out booked time slots
       const bookedTimes = bookedSlots?.map(booking => booking.booking_time) || [];
-      const availableTimeSlots = timeSlots.filter(slot => 
+      const availableTimeSlots = allSlots.filter(slot => 
         !bookedTimes.includes(slot.start_time)
       );
 
@@ -115,11 +162,26 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
     }
   };
 
+  const handleServiceToggle = (serviceId: string, checked: boolean) => {
+    setSelectedServices(prev => 
+      checked 
+        ? [...prev, serviceId]
+        : prev.filter(id => id !== serviceId)
+    );
+  };
+
+  const calculateTotal = () => {
+    return selectedServices.reduce((total, serviceId) => {
+      const service = services.find(s => s.id === serviceId);
+      return total + (service?.price || 0);
+    }, 0);
+  };
+
   const handleBooking = async () => {
-    if (!selectedDate || !selectedSlot || !customerInfo.name || !customerInfo.phone) {
+    if (!selectedDate || !selectedSlot || !customerInfo.name || !customerInfo.phone || selectedServices.length === 0) {
       toast({
         title: "Error",
-        description: "Please fill in all required fields",
+        description: "Please fill in all required fields and select at least one service",
         variant: "destructive",
       });
       return;
@@ -127,26 +189,16 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
 
     setLoading(true);
     try {
-      // Get service details
-      const { data: service } = await supabase
-        .from("services")
-        .select("id, price")
-        .eq("garage_id", garageId)
-        .eq("name", serviceName)
-        .single();
-
-      if (!service) {
-        throw new Error("Service not found");
-      }
-
       const selectedSlotData = availableSlots.find(slot => slot.id === selectedSlot);
+      const totalAmount = calculateTotal();
       
-      const { error } = await supabase
+      // Create the booking
+      const { data: booking, error: bookingError } = await supabase
         .from("bookings")
         .insert({
           user_id: "00000000-0000-0000-0000-000000000000", // Anonymous booking
           garage_id: garageId,
-          service_id: service.id,
+          service_id: selectedServices[0], // Primary service for compatibility
           booking_date: selectedDate.toISOString().split('T')[0],
           booking_time: selectedSlotData?.start_time,
           customer_name: customerInfo.name,
@@ -155,11 +207,25 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
           vehicle_make: customerInfo.vehicleMake,
           vehicle_model: customerInfo.vehicleModel,
           notes: customerInfo.notes,
-          total_amount: service.price,
+          total_amount: totalAmount,
           status: "pending",
-        });
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (bookingError) throw bookingError;
+
+      // Add all selected services to booking_services table
+      const bookingServices = selectedServices.map(serviceId => ({
+        booking_id: booking.id,
+        service_id: serviceId
+      }));
+
+      const { error: servicesError } = await supabase
+        .from("booking_services")
+        .insert(bookingServices);
+
+      if (servicesError) throw servicesError;
 
       toast({
         title: "Success",
@@ -170,6 +236,7 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
       // Reset form
       setSelectedDate(undefined);
       setSelectedSlot("");
+      setSelectedServices([]);
       setCustomerInfo({
         name: "",
         phone: "",
@@ -194,23 +261,74 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">Book Service: {serviceName}</DialogTitle>
+          <DialogTitle className="text-xl font-semibold">Book Services</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Date Selection */}
+          {/* Service Selection */}
           <div className="space-y-3">
-            <Label className="text-base font-medium">Select Date</Label>
-            <div className="flex justify-center">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                disabled={(date) => date < new Date()}
-                className="rounded-md border w-full max-w-sm"
-              />
+            <Label className="text-base font-medium">Select Services</Label>
+            <div className="grid gap-3">
+              {services.map((service) => (
+                <div key={service.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50">
+                  <Checkbox
+                    id={service.id}
+                    checked={selectedServices.includes(service.id)}
+                    onCheckedChange={(checked) => handleServiceToggle(service.id, !!checked)}
+                  />
+                  <div className="flex-1 flex justify-between items-center">
+                    <div>
+                      <label htmlFor={service.id} className="font-medium cursor-pointer">
+                        {service.name}
+                      </label>
+                      <p className="text-sm text-gray-500">{service.duration} minutes</p>
+                    </div>
+                    <Badge variant="outline">${service.price}</Badge>
+                  </div>
+                </div>
+              ))}
             </div>
+            
+            {selectedServices.length > 0 && (
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Package className="h-4 w-4 text-blue-600" />
+                  <span className="font-medium text-blue-900">Selected Services</span>
+                </div>
+                <div className="text-sm space-y-1">
+                  {selectedServices.map(serviceId => {
+                    const service = services.find(s => s.id === serviceId);
+                    return service ? (
+                      <div key={serviceId} className="flex justify-between">
+                        <span>{service.name}</span>
+                        <span>${service.price}</span>
+                      </div>
+                    ) : null;
+                  })}
+                  <div className="border-t pt-1 flex justify-between font-semibold text-blue-900">
+                    <span>Total:</span>
+                    <span>${calculateTotal()}</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* Date Selection */}
+          {selectedServices.length > 0 && (
+            <div className="space-y-3">
+              <Label className="text-base font-medium">Select Date</Label>
+              <div className="flex justify-center">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  disabled={(date) => date < new Date()}
+                  className="rounded-md border w-full max-w-sm"
+                />
+              </div>
+            </div>
+          )}
 
           {/* Time Slot Selection */}
           {selectedDate && (
@@ -233,6 +351,9 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
                       >
                         <Clock className="h-4 w-4 mr-2" />
                         {slot.start_time} - {slot.end_time}
+                        <Badge variant="secondary" className="ml-2 text-xs">
+                          {slot.source}
+                        </Badge>
                       </Button>
                     ))}
                   </div>
@@ -344,7 +465,7 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
                       Booking...
                     </>
                   ) : (
-                    "Confirm Booking"
+                    `Confirm Booking - $${calculateTotal()}`
                   )}
                 </Button>
               </div>

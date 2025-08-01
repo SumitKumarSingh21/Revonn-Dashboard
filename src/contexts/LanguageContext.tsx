@@ -1,156 +1,191 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-
-type Language = 'en' | 'hi';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 interface LanguageContextType {
-  language: Language;
-  setLanguage: (lang: Language) => void;
+  language: string;
+  setLanguage: (lang: string) => void;
   t: (key: string) => string;
 }
 
+const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+
+// Comprehensive translations
 const translations = {
   en: {
-    settings: "Settings",
-    manageAccount: "Manage your account and preferences",
-    backToDashboard: "Back to Dashboard",
-    profileInformation: "Profile Information",
-    updatePersonal: "Update your personal information and profile details",
-    fullName: "Full Name",
-    enterFullName: "Enter your full name",
-    username: "Username",
-    enterUsername: "Enter your username",
-    bio: "Bio",
-    tellAboutYourself: "Tell us about yourself",
-    phoneNumber: "Phone Number",
-    enterPhoneNumber: "Enter your phone number",
-    location: "Location",
-    enterLocation: "Enter your location",
-    saveProfile: "Save Profile",
-    saving: "Saving...",
-    languagePreferences: "Language Preferences",
-    selectLanguage: "Select your preferred language",
-    english: "English",
-    hindi: "हिंदी",
-    notificationPreferences: "Notification Preferences",
-    manageNotifications: "Manage how you receive notifications",
-    emailNotifications: "Email Notifications",
-    receiveViaEmail: "Receive notifications via email",
-    bookingNotifications: "Booking Notifications",
-    newBookings: "Get notified about new bookings",
-    paymentNotifications: "Payment Notifications",
-    getPaymentNotified: "Get notified about payments",
-    reviewNotifications: "Review Notifications",
-    newReviews: "Get notified about new reviews",
-    accountActions: "Account Actions",
-    manageSecurity: "Manage your account security and sessions",
-    signOut: "Sign Out",
-    dangerZone: "Danger Zone",
-    deleteWarning: "Once you delete your profile, there is no going back. Please be certain.",
-    deleteProfile: "Delete Profile",
-    confirmDelete: "Are you absolutely sure?",
-    deleteDescription: "This action cannot be undone. This will permanently delete your account and remove all your data from our servers including your profile, bookings, and any other associated information.",
-    cancel: "Cancel",
-    yesDelete: "Yes, delete my profile",
-    deleting: "Deleting...",
-    success: "Success",
-    profileUpdated: "Profile updated successfully",
-    error: "Error",
-    failedUpdate: "Failed to update profile",
-    accountDeleted: "Account Deleted",
-    profileDeleted: "Your profile has been permanently deleted",
-    failedDelete: "Failed to delete profile. Please try again.",
-    failedSignOut: "Failed to sign out",
+    // Navigation
     dashboard: "Dashboard",
     bookings: "Bookings",
     services: "Services",
-    timeSlots: "Time Slots",
+    timeslots: "Time Slots",
     mechanics: "Mechanics",
     earnings: "Earnings",
     reviews: "Reviews",
-    garageProfile: "Garage Profile",
+    profile: "Garage Profile",
     notifications: "Notifications",
-    revvy: "Revvy"
+    revvy: "Revvy",
+    settings: "Settings",
+    
+    // Common
+    save: "Save",
+    cancel: "Cancel",
+    edit: "Edit",
+    delete: "Delete",
+    add: "Add",
+    update: "Update",
+    loading: "Loading...",
+    search: "Search",
+    filter: "Filter",
+    sort: "Sort",
+    
+    // Bookings
+    manageBookings: "Manage customer appointments and mechanic assignments",
+    bookingDetails: "Booking Details",
+    customerInfo: "Customer Information",
+    selectServices: "Select Services",
+    availableSlots: "Available Time Slots",
+    totalAmount: "Total Amount",
+    bookingStatus: "Booking Status",
+    pending: "Pending",
+    confirmed: "Confirmed",
+    completed: "Completed",
+    cancelled: "Cancelled",
+    
+    // Time Slots
+    predefinedSlots: "Predefined Slots",
+    customSlots: "Custom Slots",
+    enableAll: "Enable All",
+    disableAll: "Disable All",
+    available: "Available",
+    unavailable: "Unavailable",
+    
+    // Services
+    serviceName: "Service Name",
+    servicePrice: "Price",
+    serviceDuration: "Duration",
+    serviceCategory: "Category",
+    addService: "Add Service",
+    editService: "Edit Service",
+    
+    // Mechanics
+    mechanicName: "Mechanic Name",
+    mechanicPhone: "Phone",
+    mechanicEmail: "Email",
+    mechanicId: "Mechanic ID",
+    assignMechanic: "Assign Mechanic",
+    
+    // Customer Form
+    customerName: "Customer Name",
+    customerPhone: "Phone Number",
+    customerEmail: "Email Address",
+    vehicleMake: "Vehicle Make",
+    vehicleModel: "Vehicle Model",
+    additionalNotes: "Additional Notes",
+    
+    // Messages
+    success: "Success",
+    error: "Error",
+    bookingCreated: "Booking created successfully",
+    bookingUpdated: "Booking updated successfully",
+    serviceAdded: "Service added successfully",
+    mechanicAssigned: "Mechanic assigned successfully",
   },
   hi: {
-    settings: "सेटिंग्स",
-    manageAccount: "अपने खाते और प्राथमिकताओं को प्रबंधित करें",
-    backToDashboard: "डैशबोर्ड पर वापस जाएं",
-    profileInformation: "प्रोफ़ाइल जानकारी",
-    updatePersonal: "अपनी व्यक्तिगत जानकारी और प्रोफ़ाइल विवरण अपडेट करें",
-    fullName: "पूरा नाम",
-    enterFullName: "अपना पूरा नाम दर्ज करें",
-    username: "उपयोगकर्ता नाम",
-    enterUsername: "अपना उपयोगकर्ता नाम दर्ज करें",
-    bio: "बायो",
-    tellAboutYourself: "हमें अपने बारे में बताएं",
-    phoneNumber: "फ़ोन नंबर",
-    enterPhoneNumber: "अपना फ़ोन नंबर दर्ज करें",
-    location: "स्थान",
-    enterLocation: "अपना स्थान दर्ज करें",
-    saveProfile: "प्रोफ़ाइल सेव करें",
-    saving: "सेव हो रहा है...",
-    languagePreferences: "भाषा प्राथमिकताएं",
-    selectLanguage: "अपनी पसंदीदा भाषा चुनें",
-    english: "English",
-    hindi: "हिंदी",
-    notificationPreferences: "अधिसूचना प्राथमिकताएं",
-    manageNotifications: "अधिसूचनाएं कैसे प्राप्त करें इसे प्रबंधित करें",
-    emailNotifications: "ईमेल अधिसूचनाएं",
-    receiveViaEmail: "ईमेल के माध्यम से अधिसूचनाएं प्राप्त करें",
-    bookingNotifications: "बुकिंग अधिसूचनाएं",
-    newBookings: "नई बुकिंग के बारे में सूचित रहें",
-    paymentNotifications: "भुगतान अधिसूचनाएं",
-    getPaymentNotified: "भुगतान के बारे में सूचित रहें",
-    reviewNotifications: "समीक्षा अधिसूचनाएं",
-    newReviews: "नई समीक्षाओं के बारे में सूचित रहें",
-    accountActions: "खाता कार्रवाई",
-    manageSecurity: "अपने खाते की सुरक्षा और सत्रों को प्रबंधित करें",
-    signOut: "साइन आउट",
-    dangerZone: "खतरे का क्षेत्र",
-    deleteWarning: "एक बार जब आप अपनी प्रोफ़ाइल हटा देते हैं, तो वापसी नहीं है। कृपया निश्चित रहें।",
-    deleteProfile: "प्रोफ़ाइल हटाएं",
-    confirmDelete: "क्या आप बिल्कुल निश्चित हैं?",
-    deleteDescription: "यह कार्रवाई पूर्ववत नहीं की जा सकती। यह स्थायी रूप से आपके खाते को हटा देगा और हमारे सर्वर से आपका सभी डेटा हटा देगा जिसमें आपकी प्रोफ़ाइल, बुकिंग और कोई अन्य संबंधित जानकारी शामिल है।",
-    cancel: "रद्द करें",
-    yesDelete: "हां, मेरी प्रोफ़ाइल हटाएं",
-    deleting: "हटाया जा रहा है...",
-    success: "सफलता",
-    profileUpdated: "प्रोफ़ाइल सफलतापूर्वक अपडेट की गई",
-    error: "त्रुटि",
-    failedUpdate: "प्रोफ़ाइल अपडेट करने में विफल",
-    accountDeleted: "खाता हटा दिया गया",
-    profileDeleted: "आपकी प्रोफ़ाइल स्थायी रूप से हटा दी गई है",
-    failedDelete: "प्रोफ़ाइल हटाने में विफल। कृपया पुनः प्रयास करें।",
-    failedSignOut: "साइन आउट करने में विफल",
+    // Navigation
     dashboard: "डैशबोर्ड",
     bookings: "बुकिंग",
     services: "सेवाएं",
-    timeSlots: "समय स्लॉट",
+    timeslots: "समय स्लॉट",
     mechanics: "मैकेनिक",
-    earnings: "कमाई",
-    reviews: "समीक्षाएं",
-    garageProfile: "गैराज प्रोफ़ाइल",
-    notifications: "अधिसूचनाएं",
-    revvy: "रेवी"
-  }
+    earnings: "आय",
+    reviews: "समीक्षा",
+    profile: "गैराज प्रोफ़ाइल",
+    notifications: "सूचनाएं",
+    revvy: "रेव्वी",
+    settings: "सेटिंग्स",
+    
+    // Common
+    save: "सेव करें",
+    cancel: "रद्द करें",
+    edit: "संपादित करें",
+    delete: "हटाएं",
+    add: "जोड़ें",
+    update: "अपडेट करें",
+    loading: "लोड हो रहा है...",
+    search: "खोजें",
+    filter: "फ़िल्टर",
+    sort: "क्रमबद्ध करें",
+    
+    // Bookings
+    manageBookings: "ग्राहक अपॉइंटमेंट और मैकेनिक असाइनमेंट प्रबंधित करें",
+    bookingDetails: "बुकिंग विवरण",
+    customerInfo: "ग्राहक की जानकारी",
+    selectServices: "सेवाएं चुनें",
+    availableSlots: "उपलब्ध समय स्लॉट",
+    totalAmount: "कुल राशि",
+    bookingStatus: "बुकिंग स्थिति",
+    pending: "लंबित",
+    confirmed: "पुष्ट",
+    completed: "पूर्ण",
+    cancelled: "रद्द",
+    
+    // Time Slots
+    predefinedSlots: "पूर्व निर्धारित स्लॉट",
+    customSlots: "कस्टम स्लॉट",
+    enableAll: "सभी सक्षम करें",
+    disableAll: "सभी अक्षम करें",
+    available: "उपलब्ध",
+    unavailable: "अनुपलब्ध",
+    
+    // Services
+    serviceName: "सेवा का नाम",
+    servicePrice: "मूल्य",
+    serviceDuration: "अवधि",
+    serviceCategory: "श्रेणी",
+    addService: "सेवा जोड़ें",
+    editService: "सेवा संपादित करें",
+    
+    // Mechanics
+    mechanicName: "मैकेनिक का नाम",
+    mechanicPhone: "फोन",
+    mechanicEmail: "ईमेल",
+    mechanicId: "मैकेनिक आईडी",
+    assignMechanic: "मैकेनिक असाइन करें",
+    
+    // Customer Form
+    customerName: "ग्राहक का नाम",
+    customerPhone: "फोन नंबर",
+    customerEmail: "ईमेल पता",
+    vehicleMake: "वाहन मेक",
+    vehicleModel: "वाहन मॉडल",
+    additionalNotes: "अतिरिक्त नोट्स",
+    
+    // Messages
+    success: "सफलता",
+    error: "त्रुटि",
+    bookingCreated: "बुकिंग सफलतापूर्वक बनाई गई",
+    bookingUpdated: "बुकिंग सफलतापूर्वक अपडेट की गई",
+    serviceAdded: "सेवा सफलतापूर्वक जोड़ी गई",
+    mechanicAssigned: "मैकेनिक सफलतापूर्वक असाइन किया गया",
+  },
 };
 
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+interface LanguageProviderProps {
+  children: ReactNode;
+}
 
-export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguageState] = useState<Language>(() => {
-    const saved = localStorage.getItem('app-language');
-    return (saved as Language) || 'en';
+export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) => {
+  const [language, setLanguageState] = useState(() => {
+    return localStorage.getItem('preferred-language') || 'en';
   });
 
-  const setLanguage = (lang: Language) => {
+  const setLanguage = (lang: string) => {
     setLanguageState(lang);
-    localStorage.setItem('app-language', lang);
+    localStorage.setItem('preferred-language', lang);
   };
 
   const t = (key: string): string => {
-    return translations[language][key as keyof typeof translations[Language]] || key;
+    const langTranslations = translations[language as keyof typeof translations] || translations.en;
+    return langTranslations[key as keyof typeof langTranslations] || key;
   };
 
   return (

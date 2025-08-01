@@ -6,8 +6,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, Clock, Car, Phone, Mail, User, MessageSquare, Wrench } from "lucide-react";
+import { Calendar, Clock, Car, Phone, Mail, User, MessageSquare, Wrench, Package } from "lucide-react";
 import MechanicAssignmentSelect from "./MechanicAssignmentSelect";
+
+interface BookingService {
+  id: string;
+  name: string;
+  price: number;
+}
 
 interface Booking {
   id: string;
@@ -24,7 +30,7 @@ interface Booking {
   assigned_mechanic_id: string | null;
   assigned_mechanic_name: string | null;
   assigned_at: string | null;
-  services: { name: string } | null;
+  services: BookingService[];
 }
 
 const BookingsTab = () => {
@@ -35,7 +41,7 @@ const BookingsTab = () => {
   useEffect(() => {
     loadBookings();
 
-    // Set up a single real-time subscription for bookings
+    // Set up real-time subscription for bookings
     const channel = supabase
       .channel("bookings-realtime-updates")
       .on(
@@ -71,17 +77,40 @@ const BookingsTab = () => {
 
       if (!garage) return;
 
-      const { data, error } = await supabase
+      // Get bookings with their services
+      const { data: bookingsData, error } = await supabase
         .from("bookings")
-        .select(`
-          *,
-          services (name)
-        `)
+        .select("*")
         .eq("garage_id", garage.id)
         .order("booking_date", { ascending: false });
 
       if (error) throw error;
-      setBookings(data || []);
+
+      // For each booking, get all associated services
+      const bookingsWithServices = await Promise.all(
+        (bookingsData || []).map(async (booking) => {
+          const { data: bookingServices } = await supabase
+            .from("booking_services")
+            .select(`
+              service_id,
+              services (name, price)
+            `)
+            .eq("booking_id", booking.id);
+
+          const services = bookingServices?.map(bs => ({
+            id: bs.service_id,
+            name: bs.services?.name || "Unknown Service",
+            price: bs.services?.price || 0
+          })) || [];
+
+          return {
+            ...booking,
+            services
+          };
+        })
+      );
+
+      setBookings(bookingsWithServices);
     } catch (error) {
       console.error("Error loading bookings:", error);
       toast({
@@ -198,6 +227,32 @@ const BookingsTab = () => {
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-gray-400" />
                       <span>{booking.customer_email}</span>
+                    </div>
+                  </div>
+
+                  {/* Services Display */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Package className="h-4 w-4 text-gray-600" />
+                      <span className="font-medium">Booked Services</span>
+                    </div>
+                    <div className="grid gap-2">
+                      {booking.services.length > 0 ? (
+                        booking.services.map((service, index) => (
+                          <div key={index} className="flex justify-between items-center bg-white p-2 rounded">
+                            <span className="text-sm font-medium">{service.name}</span>
+                            <Badge variant="outline">${service.price}</Badge>
+                          </div>
+                        ))
+                      ) : (
+                        <span className="text-sm text-gray-500">No services found</span>
+                      )}
+                      {booking.total_amount && (
+                        <div className="border-t pt-2 mt-2 flex justify-between items-center font-semibold">
+                          <span>Total Amount:</span>
+                          <span>${booking.total_amount}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
