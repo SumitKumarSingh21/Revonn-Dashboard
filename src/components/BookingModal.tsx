@@ -16,7 +16,6 @@ interface TimeSlot {
   id: string;
   start_time: string;
   end_time: string;
-  source: 'predefined' | 'custom';
 }
 
 interface Service {
@@ -103,9 +102,9 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
       const dayOfWeek = selectedDate.getDay();
       const selectedDateStr = selectedDate.toISOString().split('T')[0];
       
-      console.log('Loading time slots for:', { dayOfWeek, selectedDateStr, garageId });
+      console.log('Loading predefined time slots for:', { dayOfWeek, selectedDateStr, garageId });
       
-      // Get predefined time slots
+      // Get only predefined time slots
       const { data: predefinedSlots, error: predefinedError } = await supabase
         .from("predefined_time_slots")
         .select("id, start_time, end_time")
@@ -116,28 +115,12 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
 
       if (predefinedError) {
         console.error("Error loading predefined slots:", predefinedError);
+        throw predefinedError;
       }
 
-      // Get custom time slots
-      const { data: customSlots, error: customError } = await supabase
-        .from("garage_time_slots")
-        .select("id, start_time, end_time")
-        .eq("garage_id", garageId)
-        .eq("day_of_week", dayOfWeek)
-        .eq("is_available", true)
-        .order("start_time");
+      console.log('Found predefined slots:', predefinedSlots);
 
-      if (customError) {
-        console.error("Error loading custom slots:", customError);
-      }
-
-      // Combine all slots
-      const allSlots = [
-        ...(predefinedSlots || []).map(slot => ({ ...slot, source: 'predefined' as const })),
-        ...(customSlots || []).map(slot => ({ ...slot, source: 'custom' as const }))
-      ];
-
-      // Get already booked slots
+      // Get already booked slots for the selected date
       const { data: bookedSlots, error: bookingsError } = await supabase
         .from("bookings")
         .select("booking_time")
@@ -147,15 +130,18 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
 
       if (bookingsError) {
         console.error("Error loading booked slots:", bookingsError);
+        throw bookingsError;
       }
+
+      console.log('Booked slots:', bookedSlots);
 
       // Filter out booked time slots
       const bookedTimes = bookedSlots?.map(booking => booking.booking_time) || [];
-      const availableTimeSlots = allSlots.filter(slot => 
+      const availableTimeSlots = (predefinedSlots || []).filter(slot => 
         !bookedTimes.includes(slot.start_time)
       );
 
-      console.log('Available time slots:', availableTimeSlots);
+      console.log('Available time slots after filtering:', availableTimeSlots);
       setAvailableSlots(availableTimeSlots);
     } catch (error) {
       console.error("Error loading time slots:", error);
@@ -359,9 +345,6 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
                       >
                         <Clock className="h-4 w-4 mr-2" />
                         {slot.start_time} - {slot.end_time}
-                        <Badge variant="secondary" className="ml-2 text-xs">
-                          {slot.source}
-                        </Badge>
                       </Button>
                     ))}
                   </div>
