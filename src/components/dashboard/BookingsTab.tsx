@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -7,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, Clock, Car, Phone, Mail, User, MessageSquare, Wrench, Package } from "lucide-react";
 import MechanicAssignmentSelect from "./MechanicAssignmentSelect";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface BookingService {
   id: string;
@@ -36,6 +38,7 @@ const BookingsTab = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   useEffect(() => {
     loadBookings();
@@ -102,8 +105,8 @@ const BookingsTab = () => {
 
           const services = bookingServices?.map(bs => ({
             id: bs.service_id,
-            name: bs.services?.name || "Unknown Service",
-            price: bs.services?.price || 0
+            name: (bs.services as any)?.name || "Unknown Service",
+            price: (bs.services as any)?.price || 0
           })) || [];
 
           return {
@@ -117,7 +120,7 @@ const BookingsTab = () => {
     } catch (error) {
       console.error("Error loading bookings:", error);
       toast({
-        title: "Error",
+        title: t('error'),
         description: "Failed to load bookings",
         variant: "destructive",
       });
@@ -136,13 +139,13 @@ const BookingsTab = () => {
       if (error) throw error;
 
       toast({
-        title: "Success",
+        title: t('success'),
         description: "Booking status updated",
       });
     } catch (error) {
       console.error("Error updating booking:", error);
       toast({
-        title: "Error",
+        title: t('error'),
         description: "Failed to update booking status",
         variant: "destructive",
       });
@@ -186,8 +189,8 @@ const BookingsTab = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold">Bookings</h2>
-          <p className="text-gray-600">Manage customer appointments and mechanic assignments</p>
+          <h2 className="text-2xl font-bold">{t('bookings')}</h2>
+          <p className="text-gray-600">{t('manageBookings')}</p>
         </div>
       </div>
 
@@ -199,7 +202,7 @@ const BookingsTab = () => {
                 <div className="flex-1 space-y-4">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge className={getStatusColor(booking.status)}>
-                      {booking.status}
+                      {t(booking.status)}
                     </Badge>
                     <span className="text-sm text-gray-500">
                       #{booking.id.slice(0, 8)}
@@ -237,7 +240,7 @@ const BookingsTab = () => {
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <div className="flex items-center gap-2 mb-3">
                       <Package className="h-4 w-4 text-gray-600" />
-                      <span className="font-medium">Booked Services</span>
+                      <span className="font-medium">{t('selectServices') || 'Booked Services'}</span>
                     </div>
                     <div className="grid gap-2">
                       {booking.services.length > 0 ? (
@@ -248,11 +251,11 @@ const BookingsTab = () => {
                           </div>
                         ))
                       ) : (
-                        <span className="text-sm text-gray-500">No services found</span>
+                        <span className="text-sm text-gray-500">{t('unavailable') || 'No services found'}</span>
                       )}
                       {booking.total_amount && (
                         <div className="border-t pt-2 mt-2 flex justify-between items-center font-semibold">
-                          <span>Total Amount:</span>
+                          <span>{t('totalAmount')}:</span>
                           <span>${booking.total_amount}</span>
                         </div>
                       )}
@@ -264,7 +267,7 @@ const BookingsTab = () => {
                     <div className="bg-blue-50 p-4 rounded-lg">
                       <div className="flex items-center gap-2 mb-3">
                         <Wrench className="h-4 w-4 text-blue-600" />
-                        <span className="font-medium text-blue-900">Mechanic Assignment</span>
+                        <span className="font-medium text-blue-900">{t('assignMechanic') || 'Mechanic Assignment'}</span>
                       </div>
                       <MechanicAssignmentSelect
                         bookingId={booking.id}
@@ -284,7 +287,7 @@ const BookingsTab = () => {
                     <div className="bg-gray-50 p-3 rounded-lg">
                       <div className="flex items-center gap-2">
                         <Wrench className="h-4 w-4 text-gray-600" />
-                        <span className="font-medium">Assigned Mechanic:</span>
+                        <span className="font-medium">{t('assignMechanic') || 'Assigned Mechanic'}:</span>
                         <Badge variant="outline">{booking.assigned_mechanic_name}</Badge>
                       </div>
                       {booking.assigned_at && (
@@ -297,7 +300,7 @@ const BookingsTab = () => {
 
                   {booking.notes && (
                     <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
-                      <strong>Notes:</strong> {booking.notes}
+                      <strong>{t('additionalNotes') || 'Notes'}:</strong> {booking.notes}
                     </div>
                   )}
                 </div>
@@ -305,13 +308,13 @@ const BookingsTab = () => {
                 <div className="flex flex-col sm:flex-row gap-2 lg:min-w-[280px]">
                   <Select onValueChange={(value) => updateBookingStatus(booking.id, value)}>
                     <SelectTrigger className="w-full sm:w-32">
-                      <SelectValue placeholder="Status" />
+                      <SelectValue placeholder={t('bookingStatus') || 'Status'} />
                     </SelectTrigger>
                     <SelectContent className="bg-white z-50">
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="confirmed">Confirmed</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                      <SelectItem value="pending">{t('pending')}</SelectItem>
+                      <SelectItem value="confirmed">{t('confirmed')}</SelectItem>
+                      <SelectItem value="completed">{t('completed')}</SelectItem>
+                      <SelectItem value="cancelled">{t('cancelled')}</SelectItem>
                     </SelectContent>
                   </Select>
                   

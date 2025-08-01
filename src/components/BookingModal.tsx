@@ -10,6 +10,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Clock, User, Phone, Mail, Car, Loader2, Package } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface TimeSlot {
   id: string;
@@ -49,6 +50,7 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (isOpen) {
@@ -86,7 +88,7 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
     } catch (error) {
       console.error("Error loading services:", error);
       toast({
-        title: "Error",
+        title: t('error'),
         description: "Failed to load services",
         variant: "destructive",
       });
@@ -112,7 +114,9 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
         .eq("is_available", true)
         .order("start_time");
 
-      if (predefinedError) throw predefinedError;
+      if (predefinedError) {
+        console.error("Error loading predefined slots:", predefinedError);
+      }
 
       // Get custom time slots
       const { data: customSlots, error: customError } = await supabase
@@ -123,7 +127,9 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
         .eq("is_available", true)
         .order("start_time");
 
-      if (customError) throw customError;
+      if (customError) {
+        console.error("Error loading custom slots:", customError);
+      }
 
       // Combine all slots
       const allSlots = [
@@ -139,7 +145,9 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
         .eq("booking_date", selectedDateStr)
         .in("status", ["pending", "confirmed", "in_progress"]);
 
-      if (bookingsError) throw bookingsError;
+      if (bookingsError) {
+        console.error("Error loading booked slots:", bookingsError);
+      }
 
       // Filter out booked time slots
       const bookedTimes = bookedSlots?.map(booking => booking.booking_time) || [];
@@ -152,7 +160,7 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
     } catch (error) {
       console.error("Error loading time slots:", error);
       toast({
-        title: "Error",
+        title: t('error'),
         description: "Failed to load available time slots",
         variant: "destructive",
       });
@@ -180,7 +188,7 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
   const handleBooking = async () => {
     if (!selectedDate || !selectedSlot || !customerInfo.name || !customerInfo.phone || selectedServices.length === 0) {
       toast({
-        title: "Error",
+        title: t('error'),
         description: "Please fill in all required fields and select at least one service",
         variant: "destructive",
       });
@@ -228,8 +236,8 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
       if (servicesError) throw servicesError;
 
       toast({
-        title: "Success",
-        description: "Booking request submitted successfully! The garage will contact you soon.",
+        title: t('success'),
+        description: t('bookingCreated'),
       });
 
       onClose();
@@ -248,7 +256,7 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
     } catch (error) {
       console.error("Error creating booking:", error);
       toast({
-        title: "Error",
+        title: t('error'),
         description: "Failed to create booking. Please try again.",
         variant: "destructive",
       });
@@ -261,13 +269,13 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">Book Services</DialogTitle>
+          <DialogTitle className="text-xl font-semibold">{t('bookingDetails')}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* Service Selection */}
           <div className="space-y-3">
-            <Label className="text-base font-medium">Select Services</Label>
+            <Label className="text-base font-medium">{t('selectServices')}</Label>
             <div className="grid gap-3">
               {services.map((service) => (
                 <div key={service.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50">
@@ -281,7 +289,7 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
                       <label htmlFor={service.id} className="font-medium cursor-pointer">
                         {service.name}
                       </label>
-                      <p className="text-sm text-gray-500">{service.duration} minutes</p>
+                      <p className="text-sm text-gray-500">{service.duration} {t('serviceDuration')}</p>
                     </div>
                     <Badge variant="outline">${service.price}</Badge>
                   </div>
@@ -293,7 +301,7 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
               <div className="bg-blue-50 p-3 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <Package className="h-4 w-4 text-blue-600" />
-                  <span className="font-medium text-blue-900">Selected Services</span>
+                  <span className="font-medium text-blue-900">{t('selectServices')}</span>
                 </div>
                 <div className="text-sm space-y-1">
                   {selectedServices.map(serviceId => {
@@ -306,7 +314,7 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
                     ) : null;
                   })}
                   <div className="border-t pt-1 flex justify-between font-semibold text-blue-900">
-                    <span>Total:</span>
+                    <span>{t('totalAmount')}:</span>
                     <span>${calculateTotal()}</span>
                   </div>
                 </div>
@@ -317,7 +325,7 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
           {/* Date Selection */}
           {selectedServices.length > 0 && (
             <div className="space-y-3">
-              <Label className="text-base font-medium">Select Date</Label>
+              <Label className="text-base font-medium">{t('selectDate') || 'Select Date'}</Label>
               <div className="flex justify-center">
                 <Calendar
                   mode="single"
@@ -333,12 +341,12 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
           {/* Time Slot Selection */}
           {selectedDate && (
             <div className="space-y-3">
-              <Label className="text-base font-medium">Available Time Slots</Label>
+              <Label className="text-base font-medium">{t('availableSlots')}</Label>
               <div className="min-h-[100px]">
                 {loadingSlots ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                    <span className="text-gray-600">Loading available slots...</span>
+                    <span className="text-gray-600">{t('loading')}</span>
                   </div>
                 ) : availableSlots.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -360,7 +368,7 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
                 ) : (
                   <div className="text-center py-8 bg-gray-50 rounded-lg">
                     <Clock className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-1">No Available Slots</h3>
+                    <h3 className="text-lg font-medium text-gray-900 mb-1">{t('unavailable') || 'No Available Slots'}</h3>
                     <p className="text-gray-500">No time slots are available for this date. Please try another date.</p>
                   </div>
                 )}
@@ -371,13 +379,13 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
           {/* Customer Information */}
           {selectedSlot && (
             <div className="space-y-4 border-t pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Customer Information</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">{t('customerInfo')}</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name" className="flex items-center gap-2">
                     <User className="h-4 w-4" />
-                    Name *
+                    {t('customerName')} *
                   </Label>
                   <Input
                     id="name"
@@ -390,7 +398,7 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
                 <div className="space-y-2">
                   <Label htmlFor="phone" className="flex items-center gap-2">
                     <Phone className="h-4 w-4" />
-                    Phone *
+                    {t('customerPhone')} *
                   </Label>
                   <Input
                     id="phone"
@@ -405,7 +413,7 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
               <div className="space-y-2">
                 <Label htmlFor="email" className="flex items-center gap-2">
                   <Mail className="h-4 w-4" />
-                  Email
+                  {t('customerEmail')}
                 </Label>
                 <Input
                   id="email"
@@ -421,7 +429,7 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
                 <div className="space-y-2">
                   <Label htmlFor="make" className="flex items-center gap-2">
                     <Car className="h-4 w-4" />
-                    Vehicle Make
+                    {t('vehicleMake')}
                   </Label>
                   <Input
                     id="make"
@@ -432,7 +440,7 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="model">Vehicle Model</Label>
+                  <Label htmlFor="model">{t('vehicleModel')}</Label>
                   <Input
                     id="model"
                     value={customerInfo.vehicleModel}
@@ -444,7 +452,7 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="notes">Additional Notes</Label>
+                <Label htmlFor="notes">{t('additionalNotes')}</Label>
                 <Input
                   id="notes"
                   value={customerInfo.notes}
@@ -456,16 +464,16 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
 
               <div className="flex flex-col sm:flex-row gap-3 pt-6">
                 <Button onClick={onClose} variant="outline" className="flex-1 h-11">
-                  Cancel
+                  {t('cancel')}
                 </Button>
                 <Button onClick={handleBooking} disabled={loading} className="flex-1 h-11">
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Booking...
+                      {t('loading')}...
                     </>
                   ) : (
-                    `Confirm Booking - $${calculateTotal()}`
+                    `${t('save')} - $${calculateTotal()}`
                   )}
                 </Button>
               </div>

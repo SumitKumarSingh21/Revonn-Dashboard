@@ -36,6 +36,8 @@ const translations = {
     search: "Search",
     filter: "Filter",
     sort: "Sort",
+    status: "Status",
+    message: "Message",
     
     // Bookings
     manageBookings: "Manage customer appointments and mechanic assignments",
@@ -80,6 +82,7 @@ const translations = {
     vehicleMake: "Vehicle Make",
     vehicleModel: "Vehicle Model",
     additionalNotes: "Additional Notes",
+    selectDate: "Select Date",
     
     // Messages
     success: "Success",
@@ -114,6 +117,8 @@ const translations = {
     search: "खोजें",
     filter: "फ़िल्टर",
     sort: "क्रमबद्ध करें",
+    status: "स्थिति",
+    message: "संदेश",
     
     // Bookings
     manageBookings: "ग्राहक अपॉइंटमेंट और मैकेनिक असाइनमेंट प्रबंधित करें",
@@ -158,6 +163,7 @@ const translations = {
     vehicleMake: "वाहन मेक",
     vehicleModel: "वाहन मॉडल",
     additionalNotes: "अतिरिक्त नोट्स",
+    selectDate: "तारीख चुनें",
     
     // Messages
     success: "सफलता",
