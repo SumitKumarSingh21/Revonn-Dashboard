@@ -202,7 +202,6 @@ const PredefinedTimeSlots = () => {
                       <Switch
                         checked={slot.is_available}
                         onCheckedChange={(checked) => toggleSlotAvailability(slot.id, checked)}
-                        size="sm"
                       />
                     </div>
                   ))}

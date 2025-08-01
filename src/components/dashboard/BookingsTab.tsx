@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -93,7 +92,7 @@ const BookingsTab = () => {
             .from("booking_services")
             .select(`
               service_id,
-              services (name, price)
+              services(name, price)
             `)
             .eq("booking_id", booking.id);
 
