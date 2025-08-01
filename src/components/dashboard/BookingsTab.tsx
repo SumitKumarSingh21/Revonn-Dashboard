@@ -88,13 +88,17 @@ const BookingsTab = () => {
       // For each booking, get all associated services
       const bookingsWithServices = await Promise.all(
         (bookingsData || []).map(async (booking) => {
-          const { data: bookingServices } = await supabase
+          const { data: bookingServices, error: servicesError } = await supabase
             .from("booking_services")
             .select(`
               service_id,
-              services(name, price)
+              services!inner(name, price)
             `)
             .eq("booking_id", booking.id);
+
+          if (servicesError) {
+            console.error("Error loading booking services:", servicesError);
+          }
 
           const services = bookingServices?.map(bs => ({
             id: bs.service_id,
