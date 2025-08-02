@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Camera, Star } from "lucide-react";
+import { Camera, Star, X } from "lucide-react";
 import { User } from "@supabase/supabase-js";
 
 interface WorkingHours {
@@ -58,6 +58,7 @@ const GarageProfileTab = ({ user }: GarageProfileTabProps) => {
     working_hours: defaultWorkingHours
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [showImageUpload, setShowImageUpload] = useState(false);
   const { toast } = useToast();
 
   // Helper function to safely parse working hours
@@ -133,6 +134,8 @@ const GarageProfileTab = ({ user }: GarageProfileTabProps) => {
           location: data.location || "",
           working_hours: parseWorkingHours(data.working_hours)
         });
+        // Don't show image upload if image already exists
+        setShowImageUpload(!data.image_url);
       }
     } catch (error) {
       console.error("Error loading garage profile:", error);
@@ -152,13 +155,13 @@ const GarageProfileTab = ({ user }: GarageProfileTabProps) => {
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
-        .from('garage-images')
+        .from('garages')
         .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
       const { data } = supabase.storage
-        .from('garage-images')
+        .from('garages')
         .getPublicUrl(fileName);
 
       return data.publicUrl;
@@ -170,6 +173,37 @@ const GarageProfileTab = ({ user }: GarageProfileTabProps) => {
         variant: "destructive"
       });
       return null;
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    if (!garage?.image_url) return;
+    
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("garages")
+        .update({ image_url: null })
+        .eq("id", garage.id);
+
+      if (error) throw error;
+
+      setGarage(prev => prev ? { ...prev, image_url: null } : null);
+      setShowImageUpload(true);
+      
+      toast({
+        title: "Success",
+        description: "Image removed successfully"
+      });
+    } catch (error) {
+      console.error("Error removing image:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove image",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -224,6 +258,9 @@ const GarageProfileTab = ({ user }: GarageProfileTabProps) => {
       });
       
       setImageFile(null);
+      if (imageUrl) {
+        setShowImageUpload(false);
+      }
     } catch (error) {
       console.error("Error saving garage profile:", error);
       toast({
@@ -279,24 +316,77 @@ const GarageProfileTab = ({ user }: GarageProfileTabProps) => {
             </div>
           </div>
 
-          {/* Image Upload */}
+          {/* Image Section */}
           <div className="space-y-2">
             <Label>Garage Image</Label>
-            <div className="flex items-center gap-4">
-              {garage?.image_url && (
+            {garage?.image_url ? (
+              <div className="flex items-center gap-4">
                 <img 
                   src={garage.image_url} 
                   alt="Garage" 
                   className="w-20 h-20 object-cover rounded-lg border"
                 />
-              )}
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                className="max-w-xs"
-              />
-            </div>
+                <div className="flex flex-col gap-2">
+                  <p className="text-sm text-gray-600">Image uploaded successfully</p>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowImageUpload(true)}
+                      disabled={saving}
+                    >
+                      Change Image
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRemoveImage}
+                      disabled={saving}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Remove
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : showImageUpload ? (
+              <div className="flex items-center gap-4">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                  className="max-w-xs"
+                />
+                {imageFile && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setImageFile(null);
+                      setShowImageUpload(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-4">
+                <p className="text-sm text-gray-600">No image uploaded</p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowImageUpload(true)}
+                >
+                  Add Image
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Current Stats */}

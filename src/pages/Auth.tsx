@@ -8,19 +8,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mail, Lock, User, MapPin, Phone, Upload } from "lucide-react";
+import { Mail, Lock, User, MapPin, Upload } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import PrivacyPolicy from "@/components/PrivacyPolicy";
 import TermsAndConditions from "@/components/TermsAndConditions";
 
 const Auth = () => {
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState("");
+  const [emailOrPhone, setEmailOrPhone] = useState("");
   const [password, setPassword] = useState("");
   const [garageName, setGarageName] = useState("");
   const [garageAddress, setGarageAddress] = useState("");
   const [ownerName, setOwnerName] = useState("");
-  const [phone, setPhone] = useState("");
   const [garageImage, setGarageImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
   const navigate = useNavigate();
@@ -70,13 +69,17 @@ const Auth = () => {
     return publicUrl;
   };
 
+  const isEmail = (input: string) => {
+    return input.includes('@');
+  };
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: emailOrPhone,
         password,
       });
 
@@ -109,6 +112,13 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      // Determine if input is email or phone
+      const isEmailInput = isEmail(emailOrPhone);
+      
+      // For signup, we need an email, so if phone is provided, we'll create a dummy email
+      const email = isEmailInput ? emailOrPhone : `${emailOrPhone}@temp.revonn.com`;
+      const phone = isEmailInput ? "" : emailOrPhone;
+
       // Sign up the user without email confirmation
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
@@ -337,15 +347,15 @@ const Auth = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="phone" className="text-sm font-medium">Phone Number *</Label>
+                    <Label htmlFor="emailOrPhone" className="text-sm font-medium">Phone Number or Email Address *</Label>
                     <div className="relative">
-                      <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
-                        id="phone"
-                        type="tel"
-                        placeholder="Enter phone number"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
+                        id="emailOrPhone"
+                        type="text"
+                        placeholder="Enter phone number or email"
+                        value={emailOrPhone}
+                        onChange={(e) => setEmailOrPhone(e.target.value)}
                         className="pl-10 h-11"
                         required
                       />
@@ -353,35 +363,19 @@ const Auth = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-sm font-medium">Email Address *</Label>
+                    <Label htmlFor="password" className="text-sm font-medium">Password *</Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
-                        id="email"
-                        type="email"
-                        placeholder="Enter email address"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        id="password"
+                        type="password"
+                        placeholder="Create a strong password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
                         className="pl-10 h-11"
                         required
                       />
                     </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium">Password *</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="Create a strong password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10 h-11"
-                      required
-                    />
                   </div>
                 </div>
 
@@ -434,15 +428,15 @@ const Auth = () => {
               {/* Manual Sign In Form */}
               <form onSubmit={handleSignIn} className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="loginEmail" className="text-sm font-medium">Email Address</Label>
+                  <Label htmlFor="loginEmailOrPhone" className="text-sm font-medium">Phone Number or Email Address</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
-                      id="loginEmail"
-                      type="email"
-                      placeholder="Enter your email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      id="loginEmailOrPhone"
+                      type="text"
+                      placeholder="Enter your phone number or email"
+                      value={emailOrPhone}
+                      onChange={(e) => setEmailOrPhone(e.target.value)}
                       className="pl-10 h-11"
                       required
                     />
