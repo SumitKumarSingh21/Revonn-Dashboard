@@ -186,143 +186,156 @@ const BookingsTab = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-0">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold">{t('bookings')}</h2>
-          <p className="text-gray-600">{t('manageBookings')}</p>
+          <h2 className="text-xl sm:text-2xl font-bold">{t('bookings')}</h2>
+          <p className="text-sm sm:text-base text-gray-600">{t('manageBookings')}</p>
         </div>
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid gap-3 sm:gap-4">
         {bookings.map((booking) => (
           <Card key={booking.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
-                <div className="flex-1 space-y-4">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge className={getStatusColor(booking.status)}>
-                      {t(booking.status)}
-                    </Badge>
-                    <span className="text-sm text-gray-500">
-                      #{booking.id.slice(0, 8)}
-                    </span>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-gray-400" />
-                      <span>{new Date(booking.booking_date).toLocaleDateString()}</span>
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col gap-4 sm:gap-6">
+                {/* Header Section */}
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-6">
+                  <div className="flex-1 space-y-3 sm:space-y-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge className={getStatusColor(booking.status)}>
+                        {t(booking.status)}
+                      </Badge>
+                      <span className="text-xs sm:text-sm text-gray-500">
+                        #{booking.id.slice(0, 8)}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-gray-400" />
-                      <span>{booking.booking_time}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Car className="h-4 w-4 text-gray-400" />
-                      <span>{booking.vehicle_make} {booking.vehicle_model}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-gray-400" />
-                      <span>{booking.customer_name}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-gray-400" />
-                      <span>{booking.customer_phone}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-gray-400" />
-                      <span>{booking.customer_email}</span>
-                    </div>
-                  </div>
-
-                  {/* Services Display */}
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Package className="h-4 w-4 text-gray-600" />
-                      <span className="font-medium">{t('selectServices') || 'Booked Services'}</span>
-                    </div>
-                    <div className="grid gap-2">
-                      {booking.services.length > 0 ? (
-                        booking.services.map((service, index) => (
-                          <div key={index} className="flex justify-between items-center bg-white p-2 rounded">
-                            <span className="text-sm font-medium">{service.name}</span>
-                            <Badge variant="outline">${service.price}</Badge>
-                          </div>
-                        ))
-                      ) : (
-                        <span className="text-sm text-gray-500">{t('unavailable') || 'No services found'}</span>
-                      )}
-                      {booking.total_amount && (
-                        <div className="border-t pt-2 mt-2 flex justify-between items-center font-semibold">
-                          <span>{t('totalAmount')}:</span>
-                          <span>${booking.total_amount}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Mechanic Assignment Section */}
-                  {booking.status === 'confirmed' && (
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Wrench className="h-4 w-4 text-blue-600" />
-                        <span className="font-medium text-blue-900">{t('assignMechanic') || 'Mechanic Assignment'}</span>
-                      </div>
-                      <MechanicAssignmentSelect
-                        bookingId={booking.id}
-                        currentMechanicId={booking.assigned_mechanic_id}
-                        onAssignmentChange={handleAssignmentChange(booking.id)}
-                      />
-                      {booking.assigned_at && (
-                        <div className="text-xs text-blue-600 mt-2">
-                          Assigned on {new Date(booking.assigned_at).toLocaleString()}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Show assigned mechanic for other statuses */}
-                  {booking.assigned_mechanic_name && booking.status !== 'confirmed' && (
-                    <div className="bg-gray-50 p-3 rounded-lg">
+                    
+                    {/* Booking Details Grid - Responsive */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 text-sm">
                       <div className="flex items-center gap-2">
-                        <Wrench className="h-4 w-4 text-gray-600" />
-                        <span className="font-medium">{t('assignMechanic') || 'Assigned Mechanic'}:</span>
-                        <Badge variant="outline">{booking.assigned_mechanic_name}</Badge>
+                        <Calendar className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                        <span className="truncate">{new Date(booking.booking_date).toLocaleDateString()}</span>
                       </div>
-                      {booking.assigned_at && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          Assigned on {new Date(booking.assigned_at).toLocaleString()}
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                        <span className="truncate">{booking.booking_time}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Car className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                        <span className="truncate">{booking.vehicle_make} {booking.vehicle_model}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                        <span className="truncate">{booking.customer_name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                        <span className="truncate">{booking.customer_phone}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                        <span className="truncate">{booking.customer_email}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions Section - Mobile Responsive */}
+                  <div className="flex flex-col sm:flex-row gap-2 sm:min-w-[280px]">
+                    <Select onValueChange={(value) => updateBookingStatus(booking.id, value)}>
+                      <SelectTrigger className="w-full sm:w-32">
+                        <SelectValue placeholder={t('bookingStatus') || 'Status'} />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white z-50">
+                        <SelectItem value="pending">{t('pending')}</SelectItem>
+                        <SelectItem value="confirmed">{t('confirmed')}</SelectItem>
+                        <SelectItem value="completed">{t('completed')}</SelectItem>
+                        <SelectItem value="cancelled">{t('cancelled')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    <Button variant="outline" size="sm" className="whitespace-nowrap">
+                      <MessageSquare className="h-4 w-4 mr-1" />
+                      Message
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Services Display - Enhanced and Responsive */}
+                <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Package className="h-4 w-4 text-gray-600 flex-shrink-0" />
+                    <span className="text-sm sm:text-base font-medium">{t('selectServices') || 'Booked Services'}</span>
+                  </div>
+                  <div className="space-y-2">
+                    {booking.services.length > 0 ? (
+                      <>
+                        <div className="grid gap-2">
+                          {booking.services.map((service, index) => (
+                            <div key={index} className="flex justify-between items-center bg-white p-2 sm:p-3 rounded border-l-4 border-l-blue-500">
+                              <span className="text-xs sm:text-sm font-medium truncate mr-2">{service.name}</span>
+                              <Badge variant="outline" className="text-xs flex-shrink-0">${service.price}</Badge>
+                            </div>
+                          ))}
                         </div>
-                      )}
-                    </div>
-                  )}
-
-                  {booking.notes && (
-                    <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
-                      <strong>{t('additionalNotes') || 'Notes'}:</strong> {booking.notes}
-                    </div>
-                  )}
+                        {booking.total_amount && (
+                          <div className="border-t pt-2 mt-3 flex justify-between items-center font-semibold bg-blue-50 p-2 sm:p-3 rounded">
+                            <span className="text-sm sm:text-base">{t('totalAmount')}:</span>
+                            <span className="text-sm sm:text-base">${booking.total_amount}</span>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="text-center py-4">
+                        <Package className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                        <span className="text-sm text-gray-500">{t('unavailable') || 'No services found'}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-2 lg:min-w-[280px]">
-                  <Select onValueChange={(value) => updateBookingStatus(booking.id, value)}>
-                    <SelectTrigger className="w-full sm:w-32">
-                      <SelectValue placeholder={t('bookingStatus') || 'Status'} />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white z-50">
-                      <SelectItem value="pending">{t('pending')}</SelectItem>
-                      <SelectItem value="confirmed">{t('confirmed')}</SelectItem>
-                      <SelectItem value="completed">{t('completed')}</SelectItem>
-                      <SelectItem value="cancelled">{t('cancelled')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  
-                  <Button variant="outline" size="sm">
-                    <MessageSquare className="h-4 w-4 mr-1" />
-                    Message
-                  </Button>
-                </div>
+                {/* Mechanic Assignment Section - Responsive */}
+                {booking.status === 'confirmed' && (
+                  <div className="bg-blue-50 p-3 sm:p-4 rounded-lg">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Wrench className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                      <span className="text-sm sm:text-base font-medium text-blue-900">{t('assignMechanic') || 'Mechanic Assignment'}</span>
+                    </div>
+                    <MechanicAssignmentSelect
+                      bookingId={booking.id}
+                      currentMechanicId={booking.assigned_mechanic_id}
+                      onAssignmentChange={handleAssignmentChange(booking.id)}
+                    />
+                    {booking.assigned_at && (
+                      <div className="text-xs text-blue-600 mt-2">
+                        Assigned on {new Date(booking.assigned_at).toLocaleString()}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Show assigned mechanic for other statuses */}
+                {booking.assigned_mechanic_name && booking.status !== 'confirmed' && (
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Wrench className="h-4 w-4 text-gray-600 flex-shrink-0" />
+                      <span className="text-sm font-medium">{t('assignMechanic') || 'Assigned Mechanic'}:</span>
+                      <Badge variant="outline" className="text-xs">{booking.assigned_mechanic_name}</Badge>
+                    </div>
+                    {booking.assigned_at && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        Assigned on {new Date(booking.assigned_at).toLocaleString()}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Notes Section */}
+                {booking.notes && (
+                  <div className="text-sm text-gray-600 bg-gray-50 p-2 sm:p-3 rounded">
+                    <strong>{t('additionalNotes') || 'Notes'}:</strong> {booking.notes}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

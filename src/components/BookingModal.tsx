@@ -186,7 +186,7 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
       const selectedSlotData = availableSlots.find(slot => slot.id === selectedSlot);
       const totalAmount = calculateTotal();
       
-      // Create the booking
+      // Create ONE booking for all selected services
       const { data: booking, error: bookingError } = await supabase
         .from("bookings")
         .insert({
@@ -209,7 +209,7 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
 
       if (bookingError) throw bookingError;
 
-      // Add all selected services to booking_services table
+      // Add all selected services to the single booking
       const bookingServices = selectedServices.map(serviceId => ({
         booking_id: booking.id,
         service_id: serviceId
@@ -253,53 +253,53 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">{t('bookingDetails')}</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl font-semibold">{t('bookingDetails')}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Service Selection */}
           <div className="space-y-3">
-            <Label className="text-base font-medium">{t('selectServices')}</Label>
-            <div className="grid gap-3">
+            <Label className="text-sm sm:text-base font-medium">{t('selectServices')}</Label>
+            <div className="grid gap-2 sm:gap-3">
               {services.map((service) => (
-                <div key={service.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50">
+                <div key={service.id} className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 border rounded-lg hover:bg-gray-50">
                   <Checkbox
                     id={service.id}
                     checked={selectedServices.includes(service.id)}
                     onCheckedChange={(checked) => handleServiceToggle(service.id, !!checked)}
                   />
-                  <div className="flex-1 flex justify-between items-center">
-                    <div>
-                      <label htmlFor={service.id} className="font-medium cursor-pointer">
+                  <div className="flex-1 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+                    <div className="min-w-0">
+                      <label htmlFor={service.id} className="text-sm sm:text-base font-medium cursor-pointer block truncate">
                         {service.name}
                       </label>
-                      <p className="text-sm text-gray-500">{service.duration} {t('serviceDuration')}</p>
+                      <p className="text-xs sm:text-sm text-gray-500">{service.duration} {t('serviceDuration')}</p>
                     </div>
-                    <Badge variant="outline">${service.price}</Badge>
+                    <Badge variant="outline" className="text-xs self-start sm:self-center">${service.price}</Badge>
                   </div>
                 </div>
               ))}
             </div>
             
             {selectedServices.length > 0 && (
-              <div className="bg-blue-50 p-3 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <Package className="h-4 w-4 text-blue-600" />
-                  <span className="font-medium text-blue-900">{t('selectServices')}</span>
+              <div className="bg-blue-50 p-3 sm:p-4 rounded-lg">
+                <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                  <Package className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                  <span className="text-sm sm:text-base font-medium text-blue-900">{t('selectServices')}</span>
                 </div>
-                <div className="text-sm space-y-1">
+                <div className="text-xs sm:text-sm space-y-1">
                   {selectedServices.map(serviceId => {
                     const service = services.find(s => s.id === serviceId);
                     return service ? (
-                      <div key={serviceId} className="flex justify-between">
-                        <span>{service.name}</span>
-                        <span>${service.price}</span>
+                      <div key={serviceId} className="flex justify-between items-center">
+                        <span className="truncate mr-2">{service.name}</span>
+                        <span className="flex-shrink-0">${service.price}</span>
                       </div>
                     ) : null;
                   })}
-                  <div className="border-t pt-1 flex justify-between font-semibold text-blue-900">
+                  <div className="border-t pt-2 flex justify-between font-semibold text-blue-900">
                     <span>{t('totalAmount')}:</span>
                     <span>${calculateTotal()}</span>
                   </div>
@@ -311,7 +311,7 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
           {/* Date Selection */}
           {selectedServices.length > 0 && (
             <div className="space-y-3">
-              <Label className="text-base font-medium">{t('selectDate') || 'Select Date'}</Label>
+              <Label className="text-sm sm:text-base font-medium">{t('selectDate') || 'Select Date'}</Label>
               <div className="flex justify-center">
                 <Calendar
                   mode="single"
@@ -327,32 +327,32 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
           {/* Time Slot Selection */}
           {selectedDate && (
             <div className="space-y-3">
-              <Label className="text-base font-medium">{t('availableSlots')}</Label>
+              <Label className="text-sm sm:text-base font-medium">{t('availableSlots')}</Label>
               <div className="min-h-[100px]">
                 {loadingSlots ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                    <span className="text-gray-600">{t('loading')}</span>
+                    <span className="text-gray-600 text-sm sm:text-base">{t('loading')}</span>
                   </div>
                 ) : availableSlots.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
                     {availableSlots.map((slot) => (
                       <Button
                         key={slot.id}
                         variant={selectedSlot === slot.id ? "default" : "outline"}
                         onClick={() => setSelectedSlot(slot.id)}
-                        className="justify-center h-12 text-sm font-medium transition-all hover:scale-105"
+                        className="justify-center h-10 sm:h-12 text-xs sm:text-sm font-medium transition-all hover:scale-105"
                       >
-                        <Clock className="h-4 w-4 mr-2" />
-                        {slot.start_time} - {slot.end_time}
+                        <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                        <span className="truncate">{slot.start_time} - {slot.end_time}</span>
                       </Button>
                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-8 bg-gray-50 rounded-lg">
-                    <Clock className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-1">{t('unavailable') || 'No Available Slots'}</h3>
-                    <p className="text-gray-500">No time slots are available for this date. Please try another date.</p>
+                    <Clock className="h-8 w-8 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-3" />
+                    <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-1">{t('unavailable') || 'No Available Slots'}</h3>
+                    <p className="text-sm text-gray-500 px-4">No time slots are available for this date. Please try another date.</p>
                   </div>
                 )}
               </div>
@@ -361,12 +361,12 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
 
           {/* Customer Information */}
           {selectedSlot && (
-            <div className="space-y-4 border-t pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">{t('customerInfo')}</h3>
+            <div className="space-y-4 border-t pt-4 sm:pt-6">
+              <h3 className="text-base sm:text-lg font-medium text-gray-900">{t('customerInfo')}</h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="flex items-center gap-2">
+                  <Label htmlFor="name" className="flex items-center gap-2 text-sm">
                     <User className="h-4 w-4" />
                     {t('customerName')} *
                   </Label>
@@ -375,11 +375,11 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
                     value={customerInfo.name}
                     onChange={(e) => setCustomerInfo({ ...customerInfo, name: e.target.value })}
                     placeholder="Your full name"
-                    className="h-10"
+                    className="h-9 sm:h-10"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="flex items-center gap-2">
+                  <Label htmlFor="phone" className="flex items-center gap-2 text-sm">
                     <Phone className="h-4 w-4" />
                     {t('customerPhone')} *
                   </Label>
@@ -388,13 +388,13 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
                     value={customerInfo.phone}
                     onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
                     placeholder="Your phone number"
-                    className="h-10"
+                    className="h-9 sm:h-10"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email" className="flex items-center gap-2">
+                <Label htmlFor="email" className="flex items-center gap-2 text-sm">
                   <Mail className="h-4 w-4" />
                   {t('customerEmail')}
                 </Label>
@@ -404,13 +404,13 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
                   value={customerInfo.email}
                   onChange={(e) => setCustomerInfo({ ...customerInfo, email: e.target.value })}
                   placeholder="Your email address"
-                  className="h-10"
+                  className="h-9 sm:h-10"
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="make" className="flex items-center gap-2">
+                  <Label htmlFor="make" className="flex items-center gap-2 text-sm">
                     <Car className="h-4 w-4" />
                     {t('vehicleMake')}
                   </Label>
@@ -419,37 +419,37 @@ const BookingModal = ({ isOpen, onClose, garageId, serviceName }: BookingModalPr
                     value={customerInfo.vehicleMake}
                     onChange={(e) => setCustomerInfo({ ...customerInfo, vehicleMake: e.target.value })}
                     placeholder="e.g., Toyota"
-                    className="h-10"
+                    className="h-9 sm:h-10"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="model">{t('vehicleModel')}</Label>
+                  <Label htmlFor="model" className="text-sm">{t('vehicleModel')}</Label>
                   <Input
                     id="model"
                     value={customerInfo.vehicleModel}
                     onChange={(e) => setCustomerInfo({ ...customerInfo, vehicleModel: e.target.value })}
                     placeholder="e.g., Camry"
-                    className="h-10"
+                    className="h-9 sm:h-10"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="notes">{t('additionalNotes')}</Label>
+                <Label htmlFor="notes" className="text-sm">{t('additionalNotes')}</Label>
                 <Input
                   id="notes"
                   value={customerInfo.notes}
                   onChange={(e) => setCustomerInfo({ ...customerInfo, notes: e.target.value })}
                   placeholder="Any special requirements or notes"
-                  className="h-10"
+                  className="h-9 sm:h-10"
                 />
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-3 pt-6">
-                <Button onClick={onClose} variant="outline" className="flex-1 h-11">
+              <div className="flex flex-col sm:flex-row gap-3 pt-4 sm:pt-6">
+                <Button onClick={onClose} variant="outline" className="flex-1 h-10 sm:h-11 text-sm sm:text-base">
                   {t('cancel')}
                 </Button>
-                <Button onClick={handleBooking} disabled={loading} className="flex-1 h-11">
+                <Button onClick={handleBooking} disabled={loading} className="flex-1 h-10 sm:h-11 text-sm sm:text-base">
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
