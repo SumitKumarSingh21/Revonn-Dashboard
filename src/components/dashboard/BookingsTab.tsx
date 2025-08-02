@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -6,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, Clock, Car, Phone, Mail, User, MessageSquare, Wrench, Package } from "lucide-react";
+import { Calendar, Clock, Car, Phone, Mail, User, MessageSquare, Wrench, Package, MapPin, FileText, CreditCard } from "lucide-react";
 import MechanicAssignmentSelect from "./MechanicAssignmentSelect";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -32,6 +31,8 @@ interface Booking {
   assigned_mechanic_name: string | null;
   assigned_at: string | null;
   services: BookingService[];
+  vehicle_type: string | null;
+  payment_method: string | null;
 }
 
 const BookingsTab = () => {
@@ -201,7 +202,7 @@ const BookingsTab = () => {
               <div className="flex flex-col gap-4 sm:gap-6">
                 {/* Header Section */}
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-6">
-                  <div className="flex-1 space-y-3 sm:space-y-4">
+                  <div className="flex-1 space-y-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge className={getStatusColor(booking.status)}>
                         {t(booking.status)}
@@ -210,37 +211,9 @@ const BookingsTab = () => {
                         #{booking.id.slice(0, 8)}
                       </span>
                     </div>
-                    
-                    {/* Booking Details Grid - Responsive */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 text-sm">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                        <span className="truncate">{new Date(booking.booking_date).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                        <span className="truncate">{booking.booking_time}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Car className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                        <span className="truncate">{booking.vehicle_make} {booking.vehicle_model}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                        <span className="truncate">{booking.customer_name}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                        <span className="truncate">{booking.customer_phone}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                        <span className="truncate">{booking.customer_email}</span>
-                      </div>
-                    </div>
                   </div>
 
-                  {/* Actions Section - Mobile Responsive */}
+                  {/* Actions Section */}
                   <div className="flex flex-col sm:flex-row gap-2 sm:min-w-[280px]">
                     <Select onValueChange={(value) => updateBookingStatus(booking.id, value)}>
                       <SelectTrigger className="w-full sm:w-32">
@@ -261,18 +234,102 @@ const BookingsTab = () => {
                   </div>
                 </div>
 
-                {/* Services Display - Enhanced and Responsive */}
-                <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                {/* Booking Information Cards Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  
+                  {/* Date & Time Card */}
+                  <div className="bg-gray-50 p-3 sm:p-4 rounded-lg border-l-4 border-l-blue-500">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Calendar className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                      <span className="text-sm sm:text-base font-medium text-blue-900">{t('dateTime') || 'Date & Time'}</span>
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-3 w-3 text-gray-400" />
+                        <span>{new Date(booking.booking_date).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-3 w-3 text-gray-400" />
+                        <span>{booking.booking_time}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Customer Information Card */}
+                  <div className="bg-gray-50 p-3 sm:p-4 rounded-lg border-l-4 border-l-green-500">
+                    <div className="flex items-center gap-2 mb-2">
+                      <User className="h-4 w-4 text-green-600 flex-shrink-0" />
+                      <span className="text-sm sm:text-base font-medium text-green-900">{t('customerInfo') || 'Customer Information'}</span>
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex items-center gap-2">
+                        <User className="h-3 w-3 text-gray-400" />
+                        <span className="truncate">{booking.customer_name || 'N/A'}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-3 w-3 text-gray-400" />
+                        <span className="truncate">{booking.customer_phone || 'N/A'}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-3 w-3 text-gray-400" />
+                        <span className="truncate">{booking.customer_email || 'N/A'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Vehicle Information Card */}
+                  <div className="bg-gray-50 p-3 sm:p-4 rounded-lg border-l-4 border-l-purple-500">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Car className="h-4 w-4 text-purple-600 flex-shrink-0" />
+                      <span className="text-sm sm:text-base font-medium text-purple-900">{t('vehicleInfo') || 'Vehicle Information'}</span>
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Car className="h-3 w-3 text-gray-400" />
+                        <span className="truncate">{booking.vehicle_make} {booking.vehicle_model}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs bg-gray-200 px-2 py-1 rounded">
+                          {booking.vehicle_type || 'Car'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Payment Information Card */}
+                  <div className="bg-gray-50 p-3 sm:p-4 rounded-lg border-l-4 border-l-orange-500">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CreditCard className="h-4 w-4 text-orange-600 flex-shrink-0" />
+                      <span className="text-sm sm:text-base font-medium text-orange-900">{t('paymentInfo') || 'Payment Information'}</span>
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600">Method:</span>
+                        <Badge variant="outline" className="text-xs">
+                          {booking.payment_method || 'Cash'}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600">Total:</span>
+                        <span className="font-semibold">${booking.total_amount || 0}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Services Display Card */}
+                <div className="bg-gray-50 p-3 sm:p-4 rounded-lg border-l-4 border-l-blue-500">
                   <div className="flex items-center gap-2 mb-3">
-                    <Package className="h-4 w-4 text-gray-600 flex-shrink-0" />
-                    <span className="text-sm sm:text-base font-medium">{t('selectServices') || 'Booked Services'}</span>
+                    <Package className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                    <span className="text-sm sm:text-base font-medium text-blue-900">{t('selectServices') || 'Booked Services'}</span>
                   </div>
                   <div className="space-y-2">
                     {booking.services.length > 0 ? (
                       <>
                         <div className="grid gap-2">
                           {booking.services.map((service, index) => (
-                            <div key={index} className="flex justify-between items-center bg-white p-2 sm:p-3 rounded border-l-4 border-l-blue-500">
+                            <div key={index} className="flex justify-between items-center bg-white p-2 sm:p-3 rounded border-l-4 border-l-blue-400">
                               <span className="text-xs sm:text-sm font-medium truncate mr-2">{service.name}</span>
                               <Badge variant="outline" className="text-xs flex-shrink-0">${service.price}</Badge>
                             </div>
@@ -294,9 +351,22 @@ const BookingsTab = () => {
                   </div>
                 </div>
 
-                {/* Mechanic Assignment Section - Responsive */}
+                {/* Additional Notes Card */}
+                {booking.notes && (
+                  <div className="bg-gray-50 p-3 sm:p-4 rounded-lg border-l-4 border-l-gray-500">
+                    <div className="flex items-center gap-2 mb-2">
+                      <FileText className="h-4 w-4 text-gray-600 flex-shrink-0" />
+                      <span className="text-sm sm:text-base font-medium text-gray-900">{t('additionalNotes') || 'Additional Notes'}</span>
+                    </div>
+                    <div className="text-sm text-gray-600 bg-white p-2 sm:p-3 rounded">
+                      {booking.notes}
+                    </div>
+                  </div>
+                )}
+
+                {/* Mechanic Assignment Section */}
                 {booking.status === 'confirmed' && (
-                  <div className="bg-blue-50 p-3 sm:p-4 rounded-lg">
+                  <div className="bg-blue-50 p-3 sm:p-4 rounded-lg border-l-4 border-l-blue-600">
                     <div className="flex items-center gap-2 mb-3">
                       <Wrench className="h-4 w-4 text-blue-600 flex-shrink-0" />
                       <span className="text-sm sm:text-base font-medium text-blue-900">{t('assignMechanic') || 'Mechanic Assignment'}</span>
@@ -316,7 +386,7 @@ const BookingsTab = () => {
 
                 {/* Show assigned mechanic for other statuses */}
                 {booking.assigned_mechanic_name && booking.status !== 'confirmed' && (
-                  <div className="bg-gray-50 p-3 rounded-lg">
+                  <div className="bg-gray-50 p-3 rounded-lg border-l-4 border-l-gray-500">
                     <div className="flex items-center gap-2">
                       <Wrench className="h-4 w-4 text-gray-600 flex-shrink-0" />
                       <span className="text-sm font-medium">{t('assignMechanic') || 'Assigned Mechanic'}:</span>
@@ -330,12 +400,6 @@ const BookingsTab = () => {
                   </div>
                 )}
 
-                {/* Notes Section */}
-                {booking.notes && (
-                  <div className="text-sm text-gray-600 bg-gray-50 p-2 sm:p-3 rounded">
-                    <strong>{t('additionalNotes') || 'Notes'}:</strong> {booking.notes}
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
