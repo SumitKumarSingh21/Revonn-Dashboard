@@ -15,11 +15,14 @@ import MechanicsTab from "@/components/dashboard/MechanicsTab";
 import NotificationsTab from "@/components/dashboard/NotificationsTab";
 import RevvyTab from "@/components/dashboard/RevvyTab";
 import TimeSlotManagement from "@/components/dashboard/TimeSlotManagement";
+import GarageProfileSetup from "@/components/dashboard/GarageProfileSetup";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("bookings");
   const [user, setUser] = useState<User | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [hasGarageProfile, setHasGarageProfile] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { t } = useLanguage();
 
@@ -33,15 +36,49 @@ const Dashboard = () => {
       navigate("/auth");
     } else {
       setUser(session.user);
+      await checkGarageProfile(session.user.id);
+    }
+    setLoading(false);
+  };
+
+  const checkGarageProfile = async (userId: string) => {
+    try {
+      const { data: garage, error } = await supabase
+        .from('garages')
+        .select('id')
+        .eq('owner_id', userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error checking garage profile:', error);
+      }
+
+      setHasGarageProfile(!!garage);
+    } catch (error) {
+      console.error('Error checking garage profile:', error);
+      setHasGarageProfile(false);
     }
   };
 
-  if (!user) {
+  const handleProfileComplete = () => {
+    setHasGarageProfile(true);
+  };
+
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  // Show profile setup if user doesn't have a garage profile
+  if (hasGarageProfile === false) {
+    return <GarageProfileSetup userId={user.id} onProfileComplete={handleProfileComplete} />;
   }
 
   return (
