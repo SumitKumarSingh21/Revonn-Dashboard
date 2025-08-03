@@ -299,6 +299,41 @@ export type Database = {
         }
         Relationships: []
       }
+      garage_push_tokens: {
+        Row: {
+          created_at: string
+          garage_id: string
+          id: string
+          platform: string
+          push_token: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          garage_id: string
+          id?: string
+          platform: string
+          push_token: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          garage_id?: string
+          id?: string
+          platform?: string
+          push_token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garage_push_tokens_garage_id_fkey"
+            columns: ["garage_id"]
+            isOneToOne: false
+            referencedRelation: "garages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       garage_time_slots: {
         Row: {
           created_at: string

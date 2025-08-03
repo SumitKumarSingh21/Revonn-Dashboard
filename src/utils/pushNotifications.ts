@@ -75,7 +75,7 @@ export class PushNotificationService {
 
       if (!garage) return;
 
-      // Save push token to database
+      // Save push token to database using the proper table name from schema
       const { error } = await supabase
         .from('garage_push_tokens')
         .upsert({
