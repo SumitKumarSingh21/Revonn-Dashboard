@@ -66,7 +66,9 @@ export type Database = {
           id: string
           notes: string | null
           payment_method: string | null
+          service_details: Json | null
           service_id: string
+          service_names: string | null
           status: string | null
           total_amount: number | null
           user_id: string
@@ -89,7 +91,9 @@ export type Database = {
           id?: string
           notes?: string | null
           payment_method?: string | null
+          service_details?: Json | null
           service_id: string
+          service_names?: string | null
           status?: string | null
           total_amount?: number | null
           user_id: string
@@ -112,7 +116,9 @@ export type Database = {
           id?: string
           notes?: string | null
           payment_method?: string | null
+          service_details?: Json | null
           service_id?: string
+          service_names?: string | null
           status?: string | null
           total_amount?: number | null
           user_id?: string
@@ -554,6 +560,36 @@ export type Database = {
         }
         Relationships: []
       }
+      predefined_services: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          duration: number
+          id: string
+          name: string
+          vehicle_type: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          duration: number
+          id?: string
+          name: string
+          vehicle_type: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          duration?: number
+          id?: string
+          name?: string
+          vehicle_type?: string
+        }
+        Relationships: []
+      }
       predefined_time_slots: {
         Row: {
           created_at: string
@@ -691,6 +727,7 @@ export type Database = {
           garage_id: string | null
           id: string
           name: string
+          predefined_service_id: string | null
           price: number | null
         }
         Insert: {
@@ -701,6 +738,7 @@ export type Database = {
           garage_id?: string | null
           id?: string
           name: string
+          predefined_service_id?: string | null
           price?: number | null
         }
         Update: {
@@ -711,6 +749,7 @@ export type Database = {
           garage_id?: string | null
           id?: string
           name?: string
+          predefined_service_id?: string | null
           price?: number | null
         }
         Relationships: [
@@ -719,6 +758,13 @@ export type Database = {
             columns: ["garage_id"]
             isOneToOne: false
             referencedRelation: "garages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_predefined_service_id_fkey"
+            columns: ["predefined_service_id"]
+            isOneToOne: false
+            referencedRelation: "predefined_services"
             referencedColumns: ["id"]
           },
         ]

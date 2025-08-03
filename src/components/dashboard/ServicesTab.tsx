@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -8,8 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Edit, Trash2, Clock, DollarSign, AlertCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Edit, Trash2, Clock, DollarSign, AlertCircle, Search } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import PredefinedServiceSelector from "./PredefinedServiceSelector";
 
 interface Service {
   id: string;
@@ -18,6 +19,7 @@ interface Service {
   price: number | null;
   duration: number | null;
   category: string | null;
+  predefined_service_id: string | null;
 }
 
 interface Garage {
@@ -31,7 +33,9 @@ const ServicesTab = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [predefinedDialogOpen, setPredefinedDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -223,6 +227,12 @@ const ServicesTab = () => {
     }
   };
 
+  const filteredServices = services.filter(service =>
+    service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    service.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    service.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -258,108 +268,152 @@ const ServicesTab = () => {
           <h2 className="text-2xl font-bold">Services</h2>
           <p className="text-gray-600">Manage services for {garage.name}</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => {
-              setEditingService(null);
-              setFormData({ name: "", description: "", price: "", duration: "", category: "" });
-            }}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Service
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>{editingService ? "Edit Service" : "Add New Service"}</DialogTitle>
-              <DialogDescription>
-                {editingService ? "Update service details" : "Create a new service for your garage"}
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="name">Service Name *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g., Oil Change, Brake Inspection"
-                  required
+        <div className="flex gap-2">
+          <Dialog open={predefinedDialogOpen} onOpenChange={setPredefinedDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Add from Catalog
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-hidden">
+              <DialogHeader>
+                <DialogTitle>Add Service from Catalog</DialogTitle>
+                <DialogDescription>
+                  Choose from our comprehensive list of predefined services
+                </DialogDescription>
+              </DialogHeader>
+              <div className="max-h-[70vh] overflow-y-auto">
+                <PredefinedServiceSelector
+                  garageId={garage.id}
+                  onServiceAdded={loadGarageAndServices}
+                  onClose={() => setPredefinedDialogOpen(false)}
                 />
               </div>
-              <div>
-                <Label htmlFor="category">Category</Label>
-                <Input
-                  id="category"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  placeholder="e.g., Maintenance, Repair, Inspection"
-                />
-              </div>
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Describe the service..."
-                  rows={3}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Custom
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>{editingService ? "Edit Service" : "Add Custom Service"}</DialogTitle>
+                <DialogDescription>
+                  {editingService ? "Update service details" : "Create a custom service for your garage"}
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="price">Price ($)</Label>
+                  <Label htmlFor="name">Service Name *</Label>
                   <Input
-                    id="price"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    placeholder="0.00"
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="e.g., Oil Change, Brake Inspection"
+                    required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="duration">Duration (minutes)</Label>
+                  <Label htmlFor="category">Category</Label>
                   <Input
-                    id="duration"
-                    type="number"
-                    min="1"
-                    value={formData.duration}
-                    onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                    placeholder="60"
+                    id="category"
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    placeholder="e.g., Maintenance, Repair, Inspection"
                   />
                 </div>
-              </div>
-              <div className="flex justify-end space-x-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setDialogOpen(false)}
-                  disabled={saving}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={saving}>
-                  {saving ? "Saving..." : editingService ? "Update Service" : "Create Service"}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Describe the service..."
+                    rows={3}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="price">Price (₹)</Label>
+                    <Input
+                      id="price"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="duration">Duration (minutes)</Label>
+                    <Input
+                      id="duration"
+                      type="number"
+                      min="1"
+                      value={formData.duration}
+                      onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                      placeholder="60"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setDialogOpen(false)}
+                    disabled={saving}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={saving}>
+                    {saving ? "Saving..." : editingService ? "Update Service" : "Create Service"}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
+      {/* Search */}
+      {services.length > 0 && (
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            type="text"
+            placeholder="Search services..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      )}
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {services.map((service) => (
+        {filteredServices.map((service) => (
           <Card key={service.id} className="hover:shadow-md transition-shadow">
             <CardHeader>
               <div className="flex justify-between items-start">
-                <div>
+                <div className="flex-1">
                   <CardTitle className="text-lg">{service.name}</CardTitle>
-                  {service.category && (
-                    <CardDescription className="text-sm text-blue-600 font-medium">
-                      {service.category}
-                    </CardDescription>
-                  )}
+                  <div className="flex gap-2 mt-1">
+                    {service.category && (
+                      <Badge variant="secondary" className="text-xs">
+                        {service.category}
+                      </Badge>
+                    )}
+                    {service.predefined_service_id && (
+                      <Badge variant="outline" className="text-xs">
+                        Catalog
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 <div className="flex space-x-1">
                   <Button variant="ghost" size="sm" onClick={() => handleEdit(service)}>
@@ -380,7 +434,7 @@ const ServicesTab = () => {
                 <div className="flex items-center gap-1">
                   <DollarSign className="h-4 w-4 text-gray-400" />
                   <span className="font-medium">
-                    {service.price ? `$${service.price.toFixed(2)}` : "Price not set"}
+                    {service.price ? `₹${service.price.toFixed(2)}` : "Price not set"}
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
@@ -395,16 +449,28 @@ const ServicesTab = () => {
         ))}
       </div>
 
+      {filteredServices.length === 0 && services.length > 0 && (
+        <div className="text-center py-8">
+          <p className="text-gray-500">No services found matching your search</p>
+        </div>
+      )}
+
       {services.length === 0 && (
         <Card>
           <CardContent className="text-center py-8">
             <Plus className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No services yet</h3>
-            <p className="text-gray-500 mb-4">Create your first service for {garage.name}</p>
-            <Button onClick={() => setDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Service
-            </Button>
+            <p className="text-gray-500 mb-4">Add services for {garage.name} from our catalog or create custom ones</p>
+            <div className="flex justify-center gap-2">
+              <Button onClick={() => setPredefinedDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add from Catalog
+              </Button>
+              <Button variant="outline" onClick={() => setDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Custom
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
