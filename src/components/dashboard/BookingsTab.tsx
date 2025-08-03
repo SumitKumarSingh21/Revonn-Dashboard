@@ -195,24 +195,24 @@ const BookingsTab = () => {
         </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         {bookings.map((booking) => (
-          <Card key={booking.id} className="shadow-sm border-0 bg-white">
+          <Card key={booking.id} className="border-2 border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 bg-white">
             <CardContent className="p-6">
               {/* Header Section */}
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-100">
                 <div className="flex items-center gap-3">
                   <Badge className={getStatusColor(booking.status)} variant="secondary">
                     {t(booking.status)}
                   </Badge>
-                  <span className="text-sm text-gray-500 font-mono">
+                  <span className="text-sm text-gray-500 font-mono bg-gray-50 px-2 py-1 rounded">
                     #{booking.id.slice(0, 8)}
                   </span>
                 </div>
                 
                 <div className="flex flex-col sm:flex-row gap-2">
                   <Select onValueChange={(value) => updateBookingStatus(booking.id, value)}>
-                    <SelectTrigger className="w-full sm:w-32 h-9">
+                    <SelectTrigger className="w-full sm:w-32 h-9 border-gray-300">
                       <SelectValue placeholder="Status" />
                     </SelectTrigger>
                     <SelectContent className="bg-white z-50">
@@ -223,7 +223,7 @@ const BookingsTab = () => {
                     </SelectContent>
                   </Select>
                   
-                  <Button variant="outline" size="sm" className="h-9">
+                  <Button variant="outline" size="sm" className="h-9 border-gray-300">
                     <MessageSquare className="h-4 w-4 mr-2" />
                     Message
                   </Button>
@@ -231,178 +231,200 @@ const BookingsTab = () => {
               </div>
 
               {/* Information Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                 
-                {/* Date & Time */}
-                <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                      <Calendar className="h-4 w-4 text-white" />
+                {/* Date & Time Card */}
+                <Card className="border-2 border-blue-200 bg-blue-50 rounded-lg">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                        <Calendar className="h-4 w-4 text-white" />
+                      </div>
+                      <h3 className="font-semibold text-blue-900">Date & Time</h3>
                     </div>
-                    <h3 className="font-semibold text-blue-900">Date & Time</h3>
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2 text-gray-700">
-                      <Calendar className="h-3 w-3 text-gray-400" />
-                      <span>{new Date(booking.booking_date).toLocaleDateString()}</span>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <Calendar className="h-3 w-3 text-blue-400" />
+                        <span className="text-sm">{new Date(booking.booking_date).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <Clock className="h-3 w-3 text-blue-400" />
+                        <span className="text-sm">{booking.booking_time}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-gray-700">
-                      <Clock className="h-3 w-3 text-gray-400" />
-                      <span>{booking.booking_time}</span>
-                    </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
 
-                {/* Customer Information */}
-                <div className="bg-green-50 border border-green-100 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-                      <User className="h-4 w-4 text-white" />
+                {/* Customer Information Card */}
+                <Card className="border-2 border-green-200 bg-green-50 rounded-lg">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                        <User className="h-4 w-4 text-white" />
+                      </div>
+                      <h3 className="font-semibold text-green-900">Customer</h3>
                     </div>
-                    <h3 className="font-semibold text-green-900">Customer</h3>
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2 text-gray-700">
-                      <User className="h-3 w-3 text-gray-400" />
-                      <span className="truncate">{booking.customer_name || 'N/A'}</span>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <User className="h-3 w-3 text-green-400" />
+                        <span className="text-sm truncate">{booking.customer_name || 'N/A'}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <Phone className="h-3 w-3 text-green-400" />
+                        <span className="text-sm truncate">{booking.customer_phone || 'N/A'}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <Mail className="h-3 w-3 text-green-400" />
+                        <span className="text-sm truncate">{booking.customer_email || 'N/A'}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-gray-700">
-                      <Phone className="h-3 w-3 text-gray-400" />
-                      <span className="truncate">{booking.customer_phone || 'N/A'}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-700">
-                      <Mail className="h-3 w-3 text-gray-400" />
-                      <span className="truncate">{booking.customer_email || 'N/A'}</span>
-                    </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
 
-                {/* Vehicle Information */}
-                <div className="bg-purple-50 border border-purple-100 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
-                      <Car className="h-4 w-4 text-white" />
+                {/* Vehicle Information Card */}
+                <Card className="border-2 border-purple-200 bg-purple-50 rounded-lg">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+                        <Car className="h-4 w-4 text-white" />
+                      </div>
+                      <h3 className="font-semibold text-purple-900">Vehicle</h3>
                     </div>
-                    <h3 className="font-semibold text-purple-900">Vehicle</h3>
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2 text-gray-700">
-                      <Car className="h-3 w-3 text-gray-400" />
-                      <span className="truncate">{booking.vehicle_make} {booking.vehicle_model}</span>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <Car className="h-3 w-3 text-purple-400" />
+                        <span className="text-sm truncate">{booking.vehicle_make} {booking.vehicle_model}</span>
+                      </div>
+                      <div>
+                        <Badge variant="outline" className="text-xs bg-white border-purple-200">
+                          {booking.vehicle_type || 'Car'}
+                        </Badge>
+                      </div>
                     </div>
-                    <div>
-                      <Badge variant="outline" className="text-xs bg-white">
-                        {booking.vehicle_type || 'Car'}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
 
               </div>
 
               {/* Services and Payment Row */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
                 
-                {/* Services */}
-                <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">
-                      <Package className="h-4 w-4 text-white" />
-                    </div>
-                    <h3 className="font-semibold text-indigo-900">Services</h3>
-                  </div>
-                  <div className="space-y-2">
-                    {booking.services.length > 0 ? (
-                      booking.services.map((service, index) => (
-                        <div key={index} className="flex justify-between items-center bg-white p-2 rounded border">
-                          <span className="text-sm font-medium truncate mr-2">{service.name}</span>
-                          <Badge variant="outline" className="text-xs">${service.price}</Badge>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-4">
-                        <Package className="h-6 w-6 text-gray-400 mx-auto mb-2" />
-                        <span className="text-sm text-gray-500">No services found</span>
+                {/* Services Card */}
+                <Card className="border-2 border-indigo-200 bg-indigo-50 rounded-lg">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">
+                        <Package className="h-4 w-4 text-white" />
                       </div>
-                    )}
-                  </div>
-                </div>
+                      <h3 className="font-semibold text-indigo-900">Services</h3>
+                    </div>
+                    <div className="space-y-2">
+                      {booking.services.length > 0 ? (
+                        booking.services.map((service, index) => (
+                          <Card key={index} className="bg-white border border-indigo-200 rounded-lg">
+                            <CardContent className="p-3">
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm font-medium truncate mr-2">{service.name}</span>
+                                <Badge variant="outline" className="text-xs border-indigo-200">${service.price}</Badge>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))
+                      ) : (
+                        <div className="text-center py-4">
+                          <Package className="h-6 w-6 text-indigo-300 mx-auto mb-2" />
+                          <span className="text-sm text-indigo-600">No services found</span>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
 
-                {/* Payment Information */}
-                <div className="bg-orange-50 border border-orange-100 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
-                      <CreditCard className="h-4 w-4 text-white" />
+                {/* Payment Information Card */}
+                <Card className="border-2 border-orange-200 bg-orange-50 rounded-lg">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+                        <CreditCard className="h-4 w-4 text-white" />
+                      </div>
+                      <h3 className="font-semibold text-orange-900">Payment</h3>
                     </div>
-                    <h3 className="font-semibold text-orange-900">Payment</h3>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Method:</span>
-                      <Badge variant="outline" className="text-xs bg-white">
-                        {booking.payment_method || 'Cash'}
-                      </Badge>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Method:</span>
+                        <Badge variant="outline" className="text-xs bg-white border-orange-200">
+                          {booking.payment_method || 'Cash'}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between items-center pt-2 border-t border-orange-200">
+                        <span className="text-sm font-medium text-gray-900">Total:</span>
+                        <span className="text-lg font-bold text-orange-600">${booking.total_amount || 0}</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center pt-2 border-t">
-                      <span className="text-sm font-medium text-gray-900">Total:</span>
-                      <span className="text-lg font-bold text-gray-900">${booking.total_amount || 0}</span>
-                    </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
 
               </div>
 
               {/* Additional Notes */}
               {booking.notes && (
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-6 h-6 bg-gray-500 rounded-lg flex items-center justify-center">
-                      <FileText className="h-3 w-3 text-white" />
+                <Card className="border-2 border-gray-200 bg-gray-50 rounded-lg mb-6">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-6 h-6 bg-gray-500 rounded-lg flex items-center justify-center">
+                        <FileText className="h-3 w-3 text-white" />
+                      </div>
+                      <h3 className="font-semibold text-gray-900">Notes</h3>
                     </div>
-                    <h3 className="font-semibold text-gray-900">Notes</h3>
-                  </div>
-                  <div className="bg-white p-3 rounded border text-sm text-gray-600">
-                    {booking.notes}
-                  </div>
-                </div>
+                    <Card className="bg-white border border-gray-200 rounded-lg">
+                      <CardContent className="p-3">
+                        <p className="text-sm text-gray-600">{booking.notes}</p>
+                      </CardContent>
+                    </Card>
+                  </CardContent>
+                </Card>
               )}
 
               {/* Mechanic Assignment */}
               {booking.status === 'confirmed' && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center">
-                      <Wrench className="h-3 w-3 text-white" />
+                <Card className="border-2 border-blue-200 bg-blue-50 rounded-lg">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <Wrench className="h-3 w-3 text-white" />
+                      </div>
+                      <h3 className="font-semibold text-blue-900">Mechanic Assignment</h3>
                     </div>
-                    <h3 className="font-semibold text-blue-900">Mechanic Assignment</h3>
-                  </div>
-                  <MechanicAssignmentSelect
-                    bookingId={booking.id}
-                    currentMechanicId={booking.assigned_mechanic_id}
-                    onAssignmentChange={handleAssignmentChange(booking.id)}
-                  />
-                  {booking.assigned_at && (
-                    <div className="text-xs text-blue-600 mt-2">
-                      Assigned on {new Date(booking.assigned_at).toLocaleString()}
-                    </div>
-                  )}
-                </div>
+                    <MechanicAssignmentSelect
+                      bookingId={booking.id}
+                      currentMechanicId={booking.assigned_mechanic_id}
+                      onAssignmentChange={handleAssignmentChange(booking.id)}
+                    />
+                    {booking.assigned_at && (
+                      <div className="text-xs text-blue-600 mt-2">
+                        Assigned on {new Date(booking.assigned_at).toLocaleString()}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               )}
 
               {/* Show assigned mechanic for other statuses */}
               {booking.assigned_mechanic_name && booking.status !== 'confirmed' && (
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                  <div className="flex items-center gap-2">
-                    <Wrench className="h-4 w-4 text-gray-600" />
-                    <span className="text-sm font-medium">Assigned Mechanic:</span>
-                    <Badge variant="outline" className="text-xs">{booking.assigned_mechanic_name}</Badge>
-                  </div>
-                  {booking.assigned_at && (
-                    <div className="text-xs text-gray-500 mt-1">
-                      Assigned on {new Date(booking.assigned_at).toLocaleString()}
+                <Card className="border-2 border-gray-200 bg-gray-50 rounded-lg">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2">
+                      <Wrench className="h-4 w-4 text-gray-600" />
+                      <span className="text-sm font-medium">Assigned Mechanic:</span>
+                      <Badge variant="outline" className="text-xs border-gray-300">{booking.assigned_mechanic_name}</Badge>
                     </div>
-                  )}
-                </div>
+                    {booking.assigned_at && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        Assigned on {new Date(booking.assigned_at).toLocaleString()}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               )}
 
             </CardContent>
@@ -411,7 +433,7 @@ const BookingsTab = () => {
       </div>
 
       {bookings.length === 0 && (
-        <Card className="shadow-sm">
+        <Card className="border-2 border-gray-200 rounded-xl shadow-sm">
           <CardContent className="text-center py-12">
             <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No bookings yet</h3>
