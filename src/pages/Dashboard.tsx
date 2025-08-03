@@ -16,6 +16,7 @@ import NotificationsTab from "@/components/dashboard/NotificationsTab";
 import RevvyTab from "@/components/dashboard/RevvyTab";
 import TimeSlotManagement from "@/components/dashboard/TimeSlotManagement";
 import GarageProfileSetup from "@/components/dashboard/GarageProfileSetup";
+import PushNotificationSetup from "@/components/PushNotificationSetup";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("bookings");
@@ -112,6 +113,13 @@ const Dashboard = () => {
               </svg>
             </button>
           </div>
+
+          {/* Push Notification Setup - Show at top of dashboard */}
+          {activeTab === "bookings" && (
+            <div className="mb-6">
+              <PushNotificationSetup />
+            </div>
+          )}
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsContent value="bookings">
