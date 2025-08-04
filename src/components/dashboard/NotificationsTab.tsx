@@ -25,6 +25,11 @@ const NotificationsTab = () => {
   useEffect(() => {
     loadNotifications();
     setupRealtimeSubscriptions();
+    
+    // Request browser notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
   }, []);
 
   const setupRealtimeSubscriptions = () => {
@@ -32,16 +37,30 @@ const NotificationsTab = () => {
     
     const channel = supabase
       .channel("all-notifications-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, (payload) => {
+      .on("postgres_changes", { 
+        event: "*", 
+        schema: "public", 
+        table: "notifications" 
+      }, (payload) => {
         console.log("Real-time notification change:", payload);
         
         if (payload.eventType === 'INSERT') {
           const newNotification = payload.new as Notification;
+          
+          // Show toast notification
           toast({
             title: newNotification.title,
             description: newNotification.message,
             duration: 5000,
           });
+          
+          // Show browser notification
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification(newNotification.title, {
+              body: newNotification.message,
+              icon: '/lovable-uploads/7a2c0481-ceb6-477c-b9ef-b6e8e634b7f9.png'
+            });
+          }
           
           // Play notification sound (optional)
           try {
@@ -54,55 +73,68 @@ const NotificationsTab = () => {
         
         loadNotifications();
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, (payload) => {
-        console.log("Real-time booking change for notifications:", payload);
+      .on("postgres_changes", { 
+        event: "INSERT", 
+        schema: "public", 
+        table: "bookings" 
+      }, async (payload) => {
+        console.log("Real-time booking insert for notifications:", payload);
         
-        if (payload.eventType === 'INSERT') {
-          toast({
-            title: "New Booking Alert!",
-            description: "You have received a new booking request",
-            duration: 5000,
-          });
-        } else if (payload.eventType === 'UPDATE') {
-          toast({
-            title: "Booking Updated",
-            description: "One of your bookings has been updated",
-            duration: 3000,
-          });
-        }
+        // Create notification for new booking
+        const booking = payload.new;
+        await createBookingNotification(booking);
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "earnings" }, (payload) => {
+      .on("postgres_changes", { 
+        event: "UPDATE", 
+        schema: "public", 
+        table: "bookings" 
+      }, (payload) => {
+        console.log("Real-time booking update:", payload);
+        
+        toast({
+          title: "Booking Updated",
+          description: "One of your bookings has been updated",
+          duration: 3000,
+        });
+      })
+      .on("postgres_changes", { 
+        event: "INSERT", 
+        schema: "public", 
+        table: "earnings" 
+      }, (payload) => {
         console.log("Real-time payment notification:", payload);
         
-        if (payload.eventType === 'INSERT') {
-          toast({
-            title: "Payment Received!",
-            description: `New payment of ₹${payload.new.amount} received`,
-            duration: 5000,
-          });
-        }
+        toast({
+          title: "Payment Received!",
+          description: `New payment of ₹${payload.new.amount} received`,
+          duration: 5000,
+        });
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "reviews" }, (payload) => {
+      .on("postgres_changes", { 
+        event: "INSERT", 
+        schema: "public", 
+        table: "reviews" 
+      }, (payload) => {
         console.log("Real-time review notification:", payload);
         
-        if (payload.eventType === 'INSERT') {
-          toast({
-            title: "New Review!",
-            description: `You received a ${payload.new.rating}-star review`,
-            duration: 5000,
-          });
-        }
+        toast({
+          title: "New Review!",
+          description: `You received a ${payload.new.rating}-star review`,
+          duration: 5000,
+        });
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, (payload) => {
+      .on("postgres_changes", { 
+        event: "INSERT", 
+        schema: "public", 
+        table: "messages" 
+      }, (payload) => {
         console.log("Real-time message notification:", payload);
         
-        if (payload.eventType === 'INSERT') {
-          toast({
-            title: "New Message",
-            description: "You have received a new message",
-            duration: 4000,
-          });
-        }
+        toast({
+          title: "New Message",
+          description: "You have received a new message",
+          duration: 4000,
+        });
       })
       .subscribe((status) => {
         console.log("Comprehensive notifications subscription status:", status);
@@ -111,6 +143,41 @@ const NotificationsTab = () => {
     return () => {
       supabase.removeChannel(channel);
     };
+  };
+
+  const createBookingNotification = async (booking: any) => {
+    try {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) return;
+
+      // Get garage owner from the booking
+      const { data: garage } = await supabase
+        .from('garages')
+        .select('owner_id, name')
+        .eq('id', booking.garage_id)
+        .single();
+
+      if (!garage || garage.owner_id !== user.user.id) return;
+
+      // Create notification for garage owner
+      const { error } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: garage.owner_id,
+          type: 'booking',
+          title: 'New Booking Alert!',
+          message: `You have received a new booking for ${booking.service_names || 'your services'}`,
+          data: { booking_id: booking.id, garage_id: booking.garage_id }
+        });
+
+      if (error) {
+        console.error('Error creating booking notification:', error);
+      } else {
+        console.log('Booking notification created successfully');
+      }
+    } catch (error) {
+      console.error('Error in createBookingNotification:', error);
+    }
   };
 
   const loadNotifications = async () => {
@@ -297,15 +364,15 @@ const NotificationsTab = () => {
               !notification.read ? "border-blue-200 bg-blue-50/50 shadow-sm" : ""
             }`}
           >
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-4 flex-1">
+                <div className="flex items-start gap-4 flex-1 min-w-0">
                   <div className="flex-shrink-0 mt-1">
                     {getNotificationIcon(notification.type)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <h3 className="font-semibold text-gray-900">
+                      <h3 className="font-semibold text-gray-900 break-words">
                         {notification.title}
                       </h3>
                       <Badge className={getNotificationColor(notification.type)} variant="secondary">
@@ -317,7 +384,7 @@ const NotificationsTab = () => {
                         </Badge>
                       )}
                     </div>
-                    <p className="text-gray-600 mb-2 leading-relaxed">{notification.message}</p>
+                    <p className="text-gray-600 mb-2 leading-relaxed break-words">{notification.message}</p>
                     <p className="text-sm text-gray-500">
                       {new Date(notification.created_at).toLocaleString()}
                     </p>
@@ -354,7 +421,7 @@ const NotificationsTab = () => {
           <CardContent className="text-center py-12">
             <Bell className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-xl font-medium text-gray-900 mb-2">No notifications yet</h3>
-            <p className="text-gray-500 mb-4">
+            <p className="text-gray-500 mb-4 px-4">
               You'll receive real-time notifications about bookings, messages, reviews, and payments here
             </p>
             <Badge variant="outline" className="text-green-600 border-green-200">

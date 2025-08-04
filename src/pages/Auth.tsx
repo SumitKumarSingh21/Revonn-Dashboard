@@ -27,23 +27,36 @@ const Auth = () => {
 
   // Check if user is already logged in and handle auth state changes
   useEffect(() => {
+    let redirectTimer: NodeJS.Timeout;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.email);
+      
       if (event === 'SIGNED_IN' && session?.user) {
-        console.log('User signed in, redirecting to dashboard');
-        navigate("/dashboard");
+        console.log('User signed in, redirecting to dashboard in 100ms...');
+        // Small delay to ensure state is properly set
+        redirectTimer = setTimeout(() => {
+          navigate("/dashboard", { replace: true });
+        }, 100);
       }
     });
 
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        navigate("/dashboard");
+        console.log('Existing session found, redirecting to dashboard...');
+        navigate("/dashboard", { replace: true });
       }
     };
     
     checkUser();
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      if (redirectTimer) {
+        clearTimeout(redirectTimer);
+      }
+    };
   }, [navigate]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,7 +116,8 @@ const Auth = () => {
       }
 
       if (data.user) {
-        navigate("/dashboard");
+        // Let the auth state change handler handle the redirect
+        console.log('Manual sign in successful, waiting for auth state change...');
       }
     } catch (error) {
       console.error("Sign in error:", error);
@@ -189,7 +203,8 @@ const Auth = () => {
         });
 
         if (!signInError) {
-          navigate("/dashboard");
+          // Let the auth state change handler handle the redirect
+          console.log('Manual sign up successful, waiting for auth state change...');
         }
       }
     } catch (error) {
@@ -211,6 +226,10 @@ const Auth = () => {
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/dashboard`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         },
       });
 

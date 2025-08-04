@@ -37,11 +37,11 @@ const PushNotificationSetup = () => {
   return (
     <Card className="border-blue-200 bg-blue-50">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-lg">
           <Bell className="h-5 w-5 text-blue-600" />
           Push Notifications
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-sm">
           Get instant alerts when customers book services at your garage
         </CardDescription>
       </CardHeader>
@@ -49,30 +49,30 @@ const PushNotificationSetup = () => {
         <div className="space-y-4">
           {isNative ? (
             <div className="flex items-center gap-3">
-              <Smartphone className="h-8 w-8 text-green-600" />
-              <div>
-                <p className="font-medium text-green-800">Mobile App Detected</p>
-                <p className="text-sm text-green-600">
+              <Smartphone className="h-8 w-8 text-green-600 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-green-800 text-sm">Mobile App Detected</p>
+                <p className="text-xs text-green-600 break-words">
                   You'll receive push notifications directly on your mobile device
                 </p>
               </div>
-              {notificationsEnabled && <CheckCircle className="h-6 w-6 text-green-600" />}
+              {notificationsEnabled && <CheckCircle className="h-6 w-6 text-green-600 flex-shrink-0" />}
             </div>
           ) : (
             <div className="flex items-center gap-3">
-              <Bell className="h-8 w-8 text-blue-600" />
-              <div>
-                <p className="font-medium">Web Browser Notifications</p>
-                <p className="text-sm text-gray-600">
+              <Bell className="h-8 w-8 text-blue-600 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm">Web Browser Notifications</p>
+                <p className="text-xs text-gray-600 break-words">
                   Enable browser notifications to get alerted about new bookings
                 </p>
               </div>
-              {notificationsEnabled && <CheckCircle className="h-6 w-6 text-green-600" />}
+              {notificationsEnabled && <CheckCircle className="h-6 w-6 text-green-600 flex-shrink-0" />}
             </div>
           )}
 
           {!notificationsEnabled && (
-            <Button onClick={handleEnableNotifications} className="w-full">
+            <Button onClick={handleEnableNotifications} className="w-full text-sm py-2">
               <Bell className="h-4 w-4 mr-2" />
               Enable Notifications
             </Button>
@@ -80,13 +80,13 @@ const PushNotificationSetup = () => {
 
           {notificationsEnabled && (
             <div className="bg-green-100 border border-green-200 rounded-lg p-3">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-600" />
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
                 <span className="text-sm font-medium text-green-800">
                   Notifications are enabled! You'll receive alerts for:
                 </span>
               </div>
-              <ul className="text-sm text-green-700 mt-2 ml-6 list-disc">
+              <ul className="text-xs text-green-700 ml-6 list-disc space-y-1">
                 <li>New booking requests</li>
                 <li>Booking status updates</li>
                 <li>Payment confirmations</li>
