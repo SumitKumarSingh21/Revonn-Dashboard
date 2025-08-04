@@ -25,15 +25,25 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Check if user is already logged in
+  // Check if user is already logged in and handle auth state changes
   useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        console.log('User signed in, redirecting to dashboard');
+        navigate("/dashboard");
+      }
+    });
+
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         navigate("/dashboard");
       }
     };
+    
     checkUser();
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,7 +129,7 @@ const Auth = () => {
       const email = isEmailInput ? emailOrPhone : `${emailOrPhone}@temp.revonn.com`;
       const phone = isEmailInput ? "" : emailOrPhone;
 
-      // Sign up the user without email confirmation
+      // Sign up the user with proper redirect
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -194,7 +204,7 @@ const Auth = () => {
     }
   };
 
-  const handleGoogleSignUp = async () => {
+  const handleGoogleAuth = async () => {
     setLoading(true);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -210,15 +220,16 @@ const Auth = () => {
           description: error.message,
           variant: "destructive",
         });
+        setLoading(false);
       }
+      // Don't set loading to false here as the redirect will happen
     } catch (error) {
-      console.error("Google sign up error:", error);
+      console.error("Google auth error:", error);
       toast({
         title: "Error",
         description: "An unexpected error occurred",
         variant: "destructive",
       });
-    } finally {
       setLoading(false);
     }
   };
@@ -250,7 +261,7 @@ const Auth = () => {
             <TabsContent value="signup" className="space-y-6">
               {/* Google Sign Up Button */}
               <Button
-                onClick={handleGoogleSignUp}
+                onClick={handleGoogleAuth}
                 disabled={loading}
                 variant="outline"
                 className="w-full h-12 text-base flex items-center justify-center gap-3 border-2 hover:bg-gray-50"
@@ -405,7 +416,7 @@ const Auth = () => {
             <TabsContent value="signin" className="space-y-6">
               {/* Google Sign In Button */}
               <Button
-                onClick={handleGoogleSignUp}
+                onClick={handleGoogleAuth}
                 disabled={loading}
                 variant="outline"
                 className="w-full h-12 text-base flex items-center justify-center gap-3 border-2 hover:bg-gray-50"
