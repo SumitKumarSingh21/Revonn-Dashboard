@@ -1,11 +1,11 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Check, Trash2, Calendar, MessageSquare, DollarSign, AlertCircle, Star, Settings } from "lucide-react";
+import { Bell, Check, Trash2, Calendar, MessageSquare, DollarSign, AlertCircle, Star, Settings, Loader2 } from "lucide-react";
+import TestNotificationButton from "../TestNotificationButton";
 
 interface Notification {
   id: string;
@@ -33,19 +33,22 @@ const NotificationsTab = () => {
   }, []);
 
   const setupRealtimeSubscriptions = () => {
-    console.log("Setting up comprehensive real-time notification subscriptions");
+    console.log("Setting up notification real-time subscriptions");
     
     const channel = supabase
-      .channel("all-notifications-realtime")
+      .channel("notifications-realtime")
       .on("postgres_changes", { 
-        event: "*", 
+        event: "INSERT", 
         schema: "public", 
         table: "notifications" 
       }, (payload) => {
-        console.log("Real-time notification change:", payload);
+        console.log("New notification received:", payload);
         
-        if (payload.eventType === 'INSERT') {
+        if (payload.new) {
           const newNotification = payload.new as Notification;
+          
+          // Add to notifications list
+          setNotifications(prev => [newNotification, ...prev]);
           
           // Show toast notification
           toast({
@@ -58,132 +61,60 @@ const NotificationsTab = () => {
           if ('Notification' in window && Notification.permission === 'granted') {
             new Notification(newNotification.title, {
               body: newNotification.message,
-              icon: '/lovable-uploads/7a2c0481-ceb6-477c-b9ef-b6e8e634b7f9.png'
+              icon: '/lovable-uploads/7a2c0481-ceb6-477c-b9ef-b6e8e634b7f9.png',
+              badge: '/lovable-uploads/7a2c0481-ceb6-477c-b9ef-b6e8e634b7f9.png'
             });
           }
-          
-          // Play notification sound (optional)
-          try {
-            const audio = new Audio('/notification-sound.mp3');
-            audio.play().catch(() => console.log('Could not play notification sound'));
-          } catch (e) {
-            console.log('Notification sound not available');
-          }
         }
-        
-        loadNotifications();
-      })
-      .on("postgres_changes", { 
-        event: "INSERT", 
-        schema: "public", 
-        table: "bookings" 
-      }, async (payload) => {
-        console.log("Real-time booking insert for notifications:", payload);
-        
-        // Create notification for new booking
-        const booking = payload.new;
-        await createBookingNotification(booking);
       })
       .on("postgres_changes", { 
         event: "UPDATE", 
         schema: "public", 
-        table: "bookings" 
+        table: "notifications" 
       }, (payload) => {
-        console.log("Real-time booking update:", payload);
-        
-        toast({
-          title: "Booking Updated",
-          description: "One of your bookings has been updated",
-          duration: 3000,
-        });
+        console.log("Notification updated:", payload);
+        if (payload.new) {
+          const updatedNotification = payload.new as Notification;
+          setNotifications(prev => 
+            prev.map(notif => 
+              notif.id === updatedNotification.id ? updatedNotification : notif
+            )
+          );
+        }
       })
       .on("postgres_changes", { 
-        event: "INSERT", 
+        event: "DELETE", 
         schema: "public", 
-        table: "earnings" 
+        table: "notifications" 
       }, (payload) => {
-        console.log("Real-time payment notification:", payload);
-        
-        toast({
-          title: "Payment Received!",
-          description: `New payment of ₹${payload.new.amount} received`,
-          duration: 5000,
-        });
-      })
-      .on("postgres_changes", { 
-        event: "INSERT", 
-        schema: "public", 
-        table: "reviews" 
-      }, (payload) => {
-        console.log("Real-time review notification:", payload);
-        
-        toast({
-          title: "New Review!",
-          description: `You received a ${payload.new.rating}-star review`,
-          duration: 5000,
-        });
-      })
-      .on("postgres_changes", { 
-        event: "INSERT", 
-        schema: "public", 
-        table: "messages" 
-      }, (payload) => {
-        console.log("Real-time message notification:", payload);
-        
-        toast({
-          title: "New Message",
-          description: "You have received a new message",
-          duration: 4000,
-        });
+        console.log("Notification deleted:", payload);
+        if (payload.old) {
+          const deletedNotification = payload.old as Notification;
+          setNotifications(prev => 
+            prev.filter(notif => notif.id !== deletedNotification.id)
+          );
+        }
       })
       .subscribe((status) => {
-        console.log("Comprehensive notifications subscription status:", status);
+        console.log("Notifications subscription status:", status);
       });
 
     return () => {
+      console.log("Cleaning up notifications subscription");
       supabase.removeChannel(channel);
     };
   };
 
-  const createBookingNotification = async (booking: any) => {
-    try {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) return;
-
-      // Get garage owner from the booking
-      const { data: garage } = await supabase
-        .from('garages')
-        .select('owner_id, name')
-        .eq('id', booking.garage_id)
-        .single();
-
-      if (!garage || garage.owner_id !== user.user.id) return;
-
-      // Create notification for garage owner
-      const { error } = await supabase
-        .from('notifications')
-        .insert({
-          user_id: garage.owner_id,
-          type: 'booking',
-          title: 'New Booking Alert!',
-          message: `You have received a new booking for ${booking.service_names || 'your services'}`,
-          data: { booking_id: booking.id, garage_id: booking.garage_id }
-        });
-
-      if (error) {
-        console.error('Error creating booking notification:', error);
-      } else {
-        console.log('Booking notification created successfully');
-      }
-    } catch (error) {
-      console.error('Error in createBookingNotification:', error);
-    }
-  };
-
   const loadNotifications = async () => {
     try {
+      console.log("Loading notifications...");
       const { data: user } = await supabase.auth.getUser();
-      if (!user.user) return;
+      if (!user.user) {
+        console.log("No authenticated user");
+        return;
+      }
+
+      console.log("Loading notifications for user:", user.user.id);
 
       const { data, error } = await supabase
         .from("notifications")
@@ -191,7 +122,12 @@ const NotificationsTab = () => {
         .eq("user_id", user.user.id)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error loading notifications:", error);
+        throw error;
+      }
+
+      console.log("Loaded notifications:", data);
       setNotifications(data || []);
     } catch (error) {
       console.error("Error loading notifications:", error);
@@ -214,11 +150,10 @@ const NotificationsTab = () => {
 
       if (error) throw error;
 
-      setNotifications(prev => 
-        prev.map(notif => 
-          notif.id === notificationId ? { ...notif, read: true } : notif
-        )
-      );
+      toast({
+        title: "Success",
+        description: "Notification marked as read",
+      });
     } catch (error) {
       console.error("Error marking notification as read:", error);
       toast({
@@ -238,8 +173,6 @@ const NotificationsTab = () => {
 
       if (error) throw error;
 
-      setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
-      
       toast({
         title: "Success",
         description: "Notification deleted",
@@ -267,10 +200,6 @@ const NotificationsTab = () => {
 
       if (error) throw error;
 
-      setNotifications(prev => 
-        prev.map(notif => ({ ...notif, read: true }))
-      );
-
       toast({
         title: "Success",
         description: "All notifications marked as read",
@@ -288,15 +217,15 @@ const NotificationsTab = () => {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case "booking":
-        return <Calendar className="h-5 w-5 text-blue-600" />;
+        return <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />;
       case "message":
-        return <MessageSquare className="h-5 w-5 text-green-600" />;
+        return <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />;
       case "payment":
-        return <DollarSign className="h-5 w-5 text-yellow-600" />;
+        return <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />;
       case "review":
-        return <Star className="h-5 w-5 text-purple-600" />;
+        return <Star className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />;
       default:
-        return <AlertCircle className="h-5 w-5 text-gray-600" />;
+        return <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />;
     }
   };
 
@@ -318,7 +247,7 @@ const NotificationsTab = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     );
   }
@@ -326,79 +255,99 @@ const NotificationsTab = () => {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold flex items-center">
-            <Bell className="h-6 w-6 mr-2" />
-            Notifications
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-4">
+      <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:justify-between sm:items-center">
+        <div className="space-y-1">
+          <h2 className="text-xl sm:text-2xl font-bold flex items-center flex-wrap gap-2">
+            <Bell className="h-5 w-5 sm:h-6 sm:w-6" />
+            <span>Notifications</span>
             {unreadCount > 0 && (
-              <Badge variant="destructive" className="ml-2">
+              <Badge variant="destructive" className="text-xs">
                 {unreadCount}
               </Badge>
             )}
           </h2>
-          <p className="text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600">
             Real-time updates on your garage activities
           </p>
         </div>
-        <div className="flex space-x-2">
+        
+        <div className="flex flex-col sm:flex-row gap-2">
+          <TestNotificationButton />
           {unreadCount > 0 && (
-            <Button onClick={markAllAsRead} variant="outline" size="sm">
-              <Check className="h-4 w-4 mr-2" />
+            <Button 
+              onClick={markAllAsRead} 
+              variant="outline" 
+              size="sm"
+              className="w-full sm:w-auto text-xs sm:text-sm"
+            >
+              <Check className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
               Mark all read
             </Button>
           )}
-          <Button variant="outline" size="sm" onClick={() => window.open('/settings', '_blank')}>
-            <Settings className="h-4 w-4 mr-2" />
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="w-full sm:w-auto text-xs sm:text-sm"
+          >
+            <Settings className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
             Settings
           </Button>
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {notifications.map((notification) => (
           <Card 
             key={notification.id} 
-            className={`hover:shadow-md transition-all duration-200 ${
+            className={`transition-all duration-200 hover:shadow-md ${
               !notification.read ? "border-blue-200 bg-blue-50/50 shadow-sm" : ""
             }`}
           >
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-4 flex-1 min-w-0">
-                  <div className="flex-shrink-0 mt-1">
+            <CardContent className="p-3 sm:p-4 lg:p-6">
+              <div className="flex items-start justify-between gap-2 sm:gap-4">
+                <div className="flex items-start gap-2 sm:gap-4 flex-1 min-w-0">
+                  <div className="flex-shrink-0 mt-0.5 sm:mt-1">
                     {getNotificationIcon(notification.type)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <h3 className="font-semibold text-gray-900 break-words">
+                    <div className="flex items-start sm:items-center gap-2 mb-1 flex-col sm:flex-row sm:flex-wrap">
+                      <h3 className="font-semibold text-sm sm:text-base text-gray-900 break-words">
                         {notification.title}
                       </h3>
-                      <Badge className={getNotificationColor(notification.type)} variant="secondary">
-                        {notification.type}
-                      </Badge>
-                      {!notification.read && (
-                        <Badge variant="destructive" className="animate-pulse">
-                          New
+                      <div className="flex gap-1 sm:gap-2 flex-wrap">
+                        <Badge 
+                          className={`${getNotificationColor(notification.type)} text-xs`} 
+                          variant="secondary"
+                        >
+                          {notification.type}
                         </Badge>
-                      )}
+                        {!notification.read && (
+                          <Badge variant="destructive" className="text-xs animate-pulse">
+                            New
+                          </Badge>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-gray-600 mb-2 leading-relaxed break-words">{notification.message}</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-xs sm:text-sm text-gray-600 mb-2 leading-relaxed break-words">
+                      {notification.message}
+                    </p>
+                    <p className="text-xs text-gray-500">
                       {new Date(notification.created_at).toLocaleString()}
                     </p>
                   </div>
                 </div>
-                <div className="flex space-x-2 flex-shrink-0">
+                
+                <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 flex-shrink-0">
                   {!notification.read && (
                     <Button 
                       variant="ghost" 
                       size="sm"
                       onClick={() => markAsRead(notification.id)}
                       title="Mark as read"
+                      className="h-8 w-8 p-0"
                     >
-                      <Check className="h-4 w-4" />
+                      <Check className="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                   )}
                   <Button 
@@ -406,8 +355,9 @@ const NotificationsTab = () => {
                     size="sm"
                     onClick={() => deleteNotification(notification.id)}
                     title="Delete notification"
+                    className="h-8 w-8 p-0"
                   >
-                    <Trash2 className="h-4 w-4 text-red-500" />
+                    <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
                   </Button>
                 </div>
               </div>
@@ -418,13 +368,15 @@ const NotificationsTab = () => {
 
       {notifications.length === 0 && (
         <Card>
-          <CardContent className="text-center py-12">
-            <Bell className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-medium text-gray-900 mb-2">No notifications yet</h3>
-            <p className="text-gray-500 mb-4 px-4">
+          <CardContent className="text-center py-8 sm:py-12 px-4">
+            <Bell className="h-12 w-12 sm:h-16 sm:w-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg sm:text-xl font-medium text-gray-900 mb-2">
+              No notifications yet
+            </h3>
+            <p className="text-sm sm:text-base text-gray-500 mb-4 max-w-md mx-auto">
               You'll receive real-time notifications about bookings, messages, reviews, and payments here
             </p>
-            <Badge variant="outline" className="text-green-600 border-green-200">
+            <Badge variant="outline" className="text-green-600 border-green-200 text-xs sm:text-sm">
               Real-time updates enabled ✓
             </Badge>
           </CardContent>
