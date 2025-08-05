@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
+import MechanicPhotoUpload from "./MechanicPhotoUpload";
 
 interface MechanicFormProps {
   onMechanicAdded: () => void;
@@ -18,6 +19,7 @@ const MechanicForm = ({ onMechanicAdded }: MechanicFormProps) => {
     name: "",
     phone: "",
     email: "",
+    photo_url: "",
   });
   const [formLoading, setFormLoading] = useState(false);
   const { toast } = useToast();
@@ -76,6 +78,15 @@ const MechanicForm = ({ onMechanicAdded }: MechanicFormProps) => {
       return;
     }
 
+    if (!formData.photo_url) {
+      toast({
+        title: "Error",
+        description: "Mechanic photo is required for ID card generation",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setFormLoading(true);
 
     try {
@@ -107,6 +118,7 @@ const MechanicForm = ({ onMechanicAdded }: MechanicFormProps) => {
         name: formData.name.trim(),
         phone: formData.phone.trim() || null,
         email: formData.email.trim() || null,
+        photo_url: formData.photo_url,
         mechanic_id: mechanicId,
         status: 'active'
       };
@@ -139,11 +151,11 @@ const MechanicForm = ({ onMechanicAdded }: MechanicFormProps) => {
 
       toast({
         title: "Success",
-        description: "Mechanic added successfully",
+        description: "Mechanic added successfully with photo and ID card ready!",
       });
 
       // Reset form and close dialog
-      setFormData({ name: "", phone: "", email: "" });
+      setFormData({ name: "", phone: "", email: "", photo_url: "" });
       setAddDialogOpen(false);
       onMechanicAdded();
 
@@ -159,6 +171,10 @@ const MechanicForm = ({ onMechanicAdded }: MechanicFormProps) => {
     }
   };
 
+  const handlePhotoUploaded = (photoUrl: string) => {
+    setFormData({ ...formData, photo_url: photoUrl });
+  };
+
   return (
     <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
       <DialogTrigger asChild>
@@ -167,14 +183,19 @@ const MechanicForm = ({ onMechanicAdded }: MechanicFormProps) => {
           Add Mechanic
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Mechanic</DialogTitle>
           <DialogDescription>
-            Add a new mechanic to your garage. A unique mechanic ID will be generated automatically.
+            Add a new mechanic with photo for automatic ID card generation. All fields marked with * are required.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleAddMechanic} className="space-y-4">
+          <MechanicPhotoUpload
+            onPhotoUploaded={handlePhotoUploaded}
+            currentPhoto={formData.photo_url}
+          />
+          
           <div>
             <Label htmlFor="name">Name *</Label>
             <Input
@@ -186,6 +207,7 @@ const MechanicForm = ({ onMechanicAdded }: MechanicFormProps) => {
               disabled={formLoading}
             />
           </div>
+          
           <div>
             <Label htmlFor="phone">Phone</Label>
             <Input
@@ -196,6 +218,7 @@ const MechanicForm = ({ onMechanicAdded }: MechanicFormProps) => {
               disabled={formLoading}
             />
           </div>
+          
           <div>
             <Label htmlFor="email">Email</Label>
             <Input
@@ -207,6 +230,7 @@ const MechanicForm = ({ onMechanicAdded }: MechanicFormProps) => {
               disabled={formLoading}
             />
           </div>
+          
           <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
             <Button
               type="button"

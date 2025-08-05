@@ -453,6 +453,7 @@ export type Database = {
           mechanic_id: string
           name: string
           phone: string | null
+          photo_url: string | null
           status: string | null
           updated_at: string
         }
@@ -464,6 +465,7 @@ export type Database = {
           mechanic_id: string
           name: string
           phone?: string | null
+          photo_url?: string | null
           status?: string | null
           updated_at?: string
         }
@@ -475,6 +477,7 @@ export type Database = {
           mechanic_id?: string
           name?: string
           phone?: string | null
+          photo_url?: string | null
           status?: string | null
           updated_at?: string
         }
