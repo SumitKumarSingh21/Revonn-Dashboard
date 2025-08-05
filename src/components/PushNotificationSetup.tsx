@@ -4,13 +4,13 @@ import { pushNotificationService } from '@/utils/pushNotifications';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bell, Smartphone, CheckCircle } from 'lucide-react';
-import { useLanguage } from '@/contexts/LanguageContext';
 import { Capacitor } from '@capacitor/core';
+import { useToast } from '@/hooks/use-toast';
 
 const PushNotificationSetup = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [isNative, setIsNative] = useState(false);
-  const { t } = useLanguage();
+  const { toast } = useToast();
 
   useEffect(() => {
     setIsNative(Capacitor.isNativePlatform());
@@ -25,12 +25,38 @@ const PushNotificationSetup = () => {
   }, []);
 
   const handleEnableNotifications = async () => {
-    if (Capacitor.isNativePlatform()) {
-      await pushNotificationService.initialize();
-      setNotificationsEnabled(true);
-    } else {
-      const granted = await pushNotificationService.requestWebNotificationPermission();
-      setNotificationsEnabled(granted);
+    try {
+      if (Capacitor.isNativePlatform()) {
+        await pushNotificationService.initialize();
+        setNotificationsEnabled(true);
+        toast({
+          title: "Success",
+          description: "Push notifications enabled successfully!",
+        });
+      } else {
+        const granted = await pushNotificationService.requestWebNotificationPermission();
+        setNotificationsEnabled(granted);
+        
+        if (granted) {
+          toast({
+            title: "Success",
+            description: "Browser notifications enabled successfully!",
+          });
+        } else {
+          toast({
+            title: "Permission Denied",
+            description: "Please enable notifications in your browser settings",
+            variant: "destructive",
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error enabling notifications:', error);
+      toast({
+        title: "Error",
+        description: "Failed to enable notifications",
+        variant: "destructive",
+      });
     }
   };
 
@@ -91,6 +117,7 @@ const PushNotificationSetup = () => {
                 <li>Booking status updates</li>
                 <li>Payment confirmations</li>
                 <li>Customer messages</li>
+                <li>New reviews</li>
               </ul>
             </div>
           )}

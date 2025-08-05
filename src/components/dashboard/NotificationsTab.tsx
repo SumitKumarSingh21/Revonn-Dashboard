@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -5,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Bell, Check, Trash2, Calendar, MessageSquare, DollarSign, AlertCircle, Star, Settings, Loader2 } from "lucide-react";
-import TestNotificationButton from "../TestNotificationButton";
 
 interface Notification {
   id: string;
@@ -20,6 +20,7 @@ interface Notification {
 const NotificationsTab = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [testLoading, setTestLoading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -31,6 +32,57 @@ const NotificationsTab = () => {
       Notification.requestPermission();
     }
   }, []);
+
+  const createTestNotification = async () => {
+    try {
+      setTestLoading(true);
+      
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to create test notifications",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log("Creating test notification for user:", user.user.id);
+
+      const { error } = await supabase
+        .from("notifications")
+        .insert({
+          user_id: user.user.id,
+          type: "booking",
+          title: "Test Notification",
+          message: "This is a test notification to verify the system is working correctly at " + new Date().toLocaleTimeString(),
+          data: {
+            test: true,
+            timestamp: new Date().toISOString()
+          }
+        });
+
+      if (error) {
+        console.error("Error creating test notification:", error);
+        throw error;
+      }
+
+      console.log("Test notification created successfully");
+      toast({
+        title: "Success",
+        description: "Test notification created successfully!",
+      });
+    } catch (error) {
+      console.error("Error creating test notification:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create test notification: " + error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setTestLoading(false);
+    }
+  };
 
   const setupRealtimeSubscriptions = () => {
     console.log("Setting up notification real-time subscriptions");
@@ -97,6 +149,9 @@ const NotificationsTab = () => {
       })
       .subscribe((status) => {
         console.log("Notifications subscription status:", status);
+        if (status === 'SUBSCRIBED') {
+          console.log("Successfully subscribed to notifications real-time updates");
+        }
       });
 
     return () => {
@@ -273,7 +328,20 @@ const NotificationsTab = () => {
         </div>
         
         <div className="flex flex-col sm:flex-row gap-2">
-          <TestNotificationButton />
+          <Button
+            onClick={createTestNotification}
+            disabled={testLoading}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2 w-full sm:w-auto text-xs sm:text-sm"
+          >
+            {testLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Bell className="h-4 w-4" />
+            )}
+            Create Test Notification
+          </Button>
           {unreadCount > 0 && (
             <Button 
               onClick={markAllAsRead} 
