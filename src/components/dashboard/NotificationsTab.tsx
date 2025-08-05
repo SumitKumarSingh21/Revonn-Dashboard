@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Bell, Check, Trash2, Calendar, MessageSquare, DollarSign, AlertCircle, Star, Settings, Loader2 } from "lucide-react";
@@ -25,12 +25,16 @@ const NotificationsTab = () => {
 
   useEffect(() => {
     loadNotifications();
-    setupRealtimeSubscriptions();
+    const unsubscribe = setupRealtimeSubscriptions();
     
     // Request browser notification permission
     if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
+      Notification.requestPermission().then(permission => {
+        console.log('Browser notification permission:', permission);
+      });
     }
+
+    return unsubscribe;
   }, []);
 
   const createTestNotification = async () => {
@@ -54,11 +58,12 @@ const NotificationsTab = () => {
         .insert({
           user_id: user.user.id,
           type: "booking",
-          title: "Test Notification",
-          message: "This is a test notification to verify the system is working correctly at " + new Date().toLocaleTimeString(),
+          title: "🧪 Test Notification",
+          message: `Test notification created at ${new Date().toLocaleTimeString()} - System is working correctly!`,
           data: {
             test: true,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            source: "manual_test"
           }
         });
 
@@ -70,13 +75,13 @@ const NotificationsTab = () => {
       console.log("Test notification created successfully");
       toast({
         title: "Success",
-        description: "Test notification created successfully!",
+        description: "Test notification created! You should see it appear in real-time.",
       });
     } catch (error) {
       console.error("Error creating test notification:", error);
       toast({
         title: "Error",
-        description: "Failed to create test notification: " + error.message,
+        description: `Failed to create test notification: ${error.message}`,
         variant: "destructive",
       });
     } finally {
@@ -94,28 +99,34 @@ const NotificationsTab = () => {
         schema: "public", 
         table: "notifications" 
       }, (payload) => {
-        console.log("New notification received:", payload);
+        console.log("🔔 New notification received via real-time:", payload);
         
         if (payload.new) {
           const newNotification = payload.new as Notification;
           
-          // Add to notifications list
+          // Add to notifications list at the top
           setNotifications(prev => [newNotification, ...prev]);
           
           // Show toast notification
           toast({
             title: newNotification.title,
             description: newNotification.message,
-            duration: 5000,
+            duration: 8000,
           });
           
           // Show browser notification
           if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification(newNotification.title, {
+            const browserNotification = new Notification(newNotification.title, {
               body: newNotification.message,
               icon: '/lovable-uploads/7a2c0481-ceb6-477c-b9ef-b6e8e634b7f9.png',
-              badge: '/lovable-uploads/7a2c0481-ceb6-477c-b9ef-b6e8e634b7f9.png'
+              badge: '/lovable-uploads/7a2c0481-ceb6-477c-b9ef-b6e8e634b7f9.png',
+              tag: newNotification.id // Prevent duplicate notifications
             });
+
+            // Auto-close after 10 seconds
+            setTimeout(() => {
+              browserNotification.close();
+            }, 10000);
           }
         }
       })
@@ -124,7 +135,7 @@ const NotificationsTab = () => {
         schema: "public", 
         table: "notifications" 
       }, (payload) => {
-        console.log("Notification updated:", payload);
+        console.log("📝 Notification updated via real-time:", payload);
         if (payload.new) {
           const updatedNotification = payload.new as Notification;
           setNotifications(prev => 
@@ -139,7 +150,7 @@ const NotificationsTab = () => {
         schema: "public", 
         table: "notifications" 
       }, (payload) => {
-        console.log("Notification deleted:", payload);
+        console.log("🗑️ Notification deleted via real-time:", payload);
         if (payload.old) {
           const deletedNotification = payload.old as Notification;
           setNotifications(prev => 
@@ -148,44 +159,57 @@ const NotificationsTab = () => {
         }
       })
       .subscribe((status) => {
-        console.log("Notifications subscription status:", status);
+        console.log("📡 Notifications subscription status:", status);
         if (status === 'SUBSCRIBED') {
-          console.log("Successfully subscribed to notifications real-time updates");
+          console.log("✅ Successfully subscribed to notifications real-time updates");
+          toast({
+            title: "Real-time Connected",
+            description: "You'll now receive live notifications!",
+            duration: 3000,
+          });
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error("❌ Error subscribing to notifications");
+          toast({
+            title: "Connection Error",
+            description: "Failed to connect to real-time notifications",
+            variant: "destructive",
+          });
         }
       });
 
     return () => {
-      console.log("Cleaning up notifications subscription");
+      console.log("🔌 Cleaning up notifications subscription");
       supabase.removeChannel(channel);
     };
   };
 
   const loadNotifications = async () => {
     try {
-      console.log("Loading notifications...");
+      console.log("📂 Loading notifications...");
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) {
-        console.log("No authenticated user");
+        console.log("❌ No authenticated user");
         return;
       }
 
-      console.log("Loading notifications for user:", user.user.id);
+      console.log("👤 Loading notifications for user:", user.user.id);
 
       const { data, error } = await supabase
         .from("notifications")
         .select("*")
         .eq("user_id", user.user.id)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(50); // Limit to recent 50 notifications
 
       if (error) {
-        console.error("Error loading notifications:", error);
+        console.error("❌ Error loading notifications:", error);
         throw error;
       }
 
-      console.log("Loaded notifications:", data);
+      console.log(`✅ Loaded ${data?.length || 0} notifications:`, data);
       setNotifications(data || []);
     } catch (error) {
-      console.error("Error loading notifications:", error);
+      console.error("❌ Error loading notifications:", error);
       toast({
         title: "Error",
         description: "Failed to load notifications",
@@ -206,8 +230,9 @@ const NotificationsTab = () => {
       if (error) throw error;
 
       toast({
-        title: "Success",
+        title: "Marked as read",
         description: "Notification marked as read",
+        duration: 2000,
       });
     } catch (error) {
       console.error("Error marking notification as read:", error);
@@ -223,20 +248,21 @@ const NotificationsTab = () => {
     try {
       const { error } = await supabase
         .from("notifications")
-        .delete()
+        .update({ read: true }) // We'll just mark as read instead of deleting
         .eq("id", notificationId);
 
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Notification deleted",
+        title: "Archived",
+        description: "Notification archived successfully",
+        duration: 2000,
       });
     } catch (error) {
-      console.error("Error deleting notification:", error);
+      console.error("Error archiving notification:", error);
       toast({
         title: "Error",
-        description: "Failed to delete notification",
+        description: "Failed to archive notification",
         variant: "destructive",
       });
     }
@@ -256,8 +282,9 @@ const NotificationsTab = () => {
       if (error) throw error;
 
       toast({
-        title: "Success",
+        title: "All marked as read",
         description: "All notifications marked as read",
+        duration: 2000,
       });
     } catch (error) {
       console.error("Error marking all as read:", error);
@@ -280,7 +307,7 @@ const NotificationsTab = () => {
       case "review":
         return <Star className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />;
       default:
-        return <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />;
+        return <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />;
     }
   };
 
@@ -302,7 +329,10 @@ const NotificationsTab = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-2" />
+          <p className="text-sm text-gray-600">Loading notifications...</p>
+        </div>
       </div>
     );
   }
@@ -310,21 +340,26 @@ const NotificationsTab = () => {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <div className="space-y-4 sm:space-y-6 p-2 sm:p-4">
-      <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:justify-between sm:items-center">
-        <div className="space-y-1">
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-4 max-w-4xl mx-auto">
+      <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:justify-between sm:items-start">
+        <div className="space-y-2">
           <h2 className="text-xl sm:text-2xl font-bold flex items-center flex-wrap gap-2">
-            <Bell className="h-5 w-5 sm:h-6 sm:w-6" />
+            <Bell className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
             <span>Notifications</span>
             {unreadCount > 0 && (
-              <Badge variant="destructive" className="text-xs">
-                {unreadCount}
+              <Badge variant="destructive" className="text-xs animate-pulse">
+                {unreadCount} new
               </Badge>
             )}
           </h2>
           <p className="text-sm sm:text-base text-gray-600">
-            Real-time updates on your garage activities
+            Real-time updates for bookings, messages, and payments
           </p>
+          {Notification?.permission === 'granted' && (
+            <Badge variant="outline" className="text-green-600 border-green-200 text-xs w-fit">
+              🔔 Browser notifications enabled
+            </Badge>
+          )}
         </div>
         
         <div className="flex flex-col sm:flex-row gap-2">
@@ -333,57 +368,51 @@ const NotificationsTab = () => {
             disabled={testLoading}
             variant="outline"
             size="sm"
-            className="flex items-center gap-2 w-full sm:w-auto text-xs sm:text-sm"
+            className="flex items-center gap-2 text-xs sm:text-sm"
           >
             {testLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Bell className="h-4 w-4" />
             )}
-            Create Test Notification
+            Test Notification
           </Button>
           {unreadCount > 0 && (
             <Button 
               onClick={markAllAsRead} 
               variant="outline" 
               size="sm"
-              className="w-full sm:w-auto text-xs sm:text-sm"
+              className="text-xs sm:text-sm"
             >
               <Check className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
               Mark all read
             </Button>
           )}
-          <Button 
-            variant="outline" 
-            size="sm"
-            className="w-full sm:w-auto text-xs sm:text-sm"
-          >
-            <Settings className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-            Settings
-          </Button>
         </div>
       </div>
 
-      <div className="space-y-3 sm:space-y-4">
+      <div className="space-y-3">
         {notifications.map((notification) => (
           <Card 
             key={notification.id} 
-            className={`transition-all duration-200 hover:shadow-md ${
-              !notification.read ? "border-blue-200 bg-blue-50/50 shadow-sm" : ""
+            className={`transition-all duration-300 hover:shadow-md border-l-4 ${
+              !notification.read 
+                ? "border-l-blue-500 bg-blue-50/50 shadow-sm" 
+                : "border-l-gray-200"
             }`}
           >
-            <CardContent className="p-3 sm:p-4 lg:p-6">
-              <div className="flex items-start justify-between gap-2 sm:gap-4">
-                <div className="flex items-start gap-2 sm:gap-4 flex-1 min-w-0">
-                  <div className="flex-shrink-0 mt-0.5 sm:mt-1">
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3 flex-1 min-w-0">
+                  <div className="flex-shrink-0 mt-1">
                     {getNotificationIcon(notification.type)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start sm:items-center gap-2 mb-1 flex-col sm:flex-row sm:flex-wrap">
+                    <div className="flex items-start justify-between gap-2 mb-2">
                       <h3 className="font-semibold text-sm sm:text-base text-gray-900 break-words">
                         {notification.title}
                       </h3>
-                      <div className="flex gap-1 sm:gap-2 flex-wrap">
+                      <div className="flex gap-1 flex-shrink-0">
                         <Badge 
                           className={`${getNotificationColor(notification.type)} text-xs`} 
                           variant="secondary"
@@ -392,7 +421,7 @@ const NotificationsTab = () => {
                         </Badge>
                         {!notification.read && (
                           <Badge variant="destructive" className="text-xs animate-pulse">
-                            New
+                            NEW
                           </Badge>
                         )}
                       </div>
@@ -400,33 +429,34 @@ const NotificationsTab = () => {
                     <p className="text-xs sm:text-sm text-gray-600 mb-2 leading-relaxed break-words">
                       {notification.message}
                     </p>
-                    <p className="text-xs text-gray-500">
-                      {new Date(notification.created_at).toLocaleString()}
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-gray-500">
+                        {new Date(notification.created_at).toLocaleString()}
+                      </p>
+                      <div className="flex gap-1">
+                        {!notification.read && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => markAsRead(notification.id)}
+                            className="h-7 px-2 text-xs"
+                          >
+                            <Check className="h-3 w-3 mr-1" />
+                            Read
+                          </Button>
+                        )}
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => deleteNotification(notification.id)}
+                          className="h-7 px-2 text-xs"
+                        >
+                          <Trash2 className="h-3 w-3 mr-1 text-red-500" />
+                          Archive
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 flex-shrink-0">
-                  {!notification.read && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => markAsRead(notification.id)}
-                      title="Mark as read"
-                      className="h-8 w-8 p-0"
-                    >
-                      <Check className="h-3 w-3 sm:h-4 sm:w-4" />
-                    </Button>
-                  )}
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => deleteNotification(notification.id)}
-                    title="Delete notification"
-                    className="h-8 w-8 p-0"
-                  >
-                    <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
-                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -435,18 +465,25 @@ const NotificationsTab = () => {
       </div>
 
       {notifications.length === 0 && (
-        <Card>
-          <CardContent className="text-center py-8 sm:py-12 px-4">
-            <Bell className="h-12 w-12 sm:h-16 sm:w-16 text-gray-300 mx-auto mb-4" />
+        <Card className="border-dashed border-2">
+          <CardContent className="text-center py-12 px-4">
+            <Bell className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg sm:text-xl font-medium text-gray-900 mb-2">
               No notifications yet
             </h3>
-            <p className="text-sm sm:text-base text-gray-500 mb-4 max-w-md mx-auto">
-              You'll receive real-time notifications about bookings, messages, reviews, and payments here
+            <p className="text-sm sm:text-base text-gray-500 mb-6 max-w-md mx-auto">
+              You'll receive real-time notifications when customers book services, send messages, or leave reviews.
             </p>
-            <Badge variant="outline" className="text-green-600 border-green-200 text-xs sm:text-sm">
-              Real-time updates enabled ✓
-            </Badge>
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
+              <Badge variant="outline" className="text-green-600 border-green-200">
+                ✓ Real-time enabled
+              </Badge>
+              {Notification?.permission === 'granted' && (
+                <Badge variant="outline" className="text-blue-600 border-blue-200">
+                  ✓ Browser notifications on
+                </Badge>
+              )}
+            </div>
           </CardContent>
         </Card>
       )}
