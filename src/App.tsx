@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Services from "./pages/Services";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import MechanicVerification from "./pages/MechanicVerification";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,8 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/services" element={<Services />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/verify/:mechanicId" element={<MechanicVerification />} />
+              <Route path="/verify" element={<MechanicVerification />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

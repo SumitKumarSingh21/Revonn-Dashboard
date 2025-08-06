@@ -1,4 +1,3 @@
-
 import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, CreditCard, RotateCcw } from "lucide-react";
@@ -36,19 +35,11 @@ const MechanicIDCard = ({ mechanic, garage }: MechanicIDCardProps) => {
     try {
       const QRCode = (await import('qrcode')).default;
       
-      // Create unique QR data for each mechanic
-      const qrData = JSON.stringify({
-        mechanic_id: mechanic.mechanic_id,
-        name: mechanic.name,
-        garage: garage.name,
-        location: garage.location || 'Location not specified',
-        verified_by: "Revonn",
-        verification_url: `https://revonn.com/verify/${mechanic.mechanic_id}`,
-        timestamp: new Date().toISOString(),
-        unique_id: `${mechanic.id}-${Date.now()}`
-      });
+      // Create verification URL that will work both locally and in production
+      const baseUrl = window.location.origin;
+      const verificationUrl = `${baseUrl}/verify/${mechanic.mechanic_id}`;
       
-      const qrUrl = await QRCode.toDataURL(qrData, {
+      const qrUrl = await QRCode.toDataURL(verificationUrl, {
         width: 140,
         margin: 2,
         color: {
@@ -60,6 +51,7 @@ const MechanicIDCard = ({ mechanic, garage }: MechanicIDCardProps) => {
       
       setQrCodeUrl(qrUrl);
       console.log(`Generated QR code for mechanic: ${mechanic.name} (ID: ${mechanic.mechanic_id})`);
+      console.log(`Verification URL: ${verificationUrl}`);
     } catch (error) {
       console.error('Error generating QR code:', error);
       toast({
@@ -346,7 +338,7 @@ const MechanicIDCard = ({ mechanic, garage }: MechanicIDCardProps) => {
                   is authorized by <span className="font-bold">REVONN</span> from <span className="font-semibold">{garage.name}</span>
                 </p>
                 <p className="text-xs opacity-70 font-mono">
-                  Verify at: revonn.com/verify/{mechanic.mechanic_id}
+                  Scan QR code to verify online
                 </p>
               </div>
             </div>
