@@ -1,3 +1,4 @@
+
 import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, CreditCard, RotateCcw } from "lucide-react";
@@ -39,6 +40,9 @@ const MechanicIDCard = ({ mechanic, garage }: MechanicIDCardProps) => {
       const baseUrl = window.location.origin;
       const verificationUrl = `${baseUrl}/verify/${mechanic.mechanic_id}`;
       
+      console.log(`Generating QR code for mechanic: ${mechanic.name} (ID: ${mechanic.mechanic_id})`);
+      console.log(`Verification URL: ${verificationUrl}`);
+      
       const qrUrl = await QRCode.toDataURL(verificationUrl, {
         width: 140,
         margin: 2,
@@ -50,8 +54,6 @@ const MechanicIDCard = ({ mechanic, garage }: MechanicIDCardProps) => {
       });
       
       setQrCodeUrl(qrUrl);
-      console.log(`Generated QR code for mechanic: ${mechanic.name} (ID: ${mechanic.mechanic_id})`);
-      console.log(`Verification URL: ${verificationUrl}`);
     } catch (error) {
       console.error('Error generating QR code:', error);
       toast({

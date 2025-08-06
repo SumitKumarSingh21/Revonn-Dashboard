@@ -39,11 +39,16 @@ const MechanicVerification = () => {
       // Get mechanic ID from URL params or search params
       const id = mechanicId || searchParams.get('mechanic_id');
       
+      console.log('Searching for mechanic ID:', id);
+      console.log('URL params:', { mechanicId });
+      console.log('Search params:', Object.fromEntries(searchParams.entries()));
+      
       if (!id) {
         setError('Mechanic ID not provided');
         return;
       }
 
+      // First, let's try to find the mechanic by mechanic_id
       const { data, error } = await supabase
         .from('mechanics')
         .select(`
@@ -53,13 +58,32 @@ const MechanicVerification = () => {
         .eq('mechanic_id', id)
         .single();
 
-      if (error) {
-        console.error('Error fetching mechanic:', error);
-        setError('Mechanic not found or invalid QR code');
-        return;
-      }
+      console.log('Database query result:', { data, error });
 
-      setMechanic(data);
+      if (error) {
+        console.error('Database error:', error);
+        
+        // If not found by mechanic_id, try by id
+        const { data: dataById, error: errorById } = await supabase
+          .from('mechanics')
+          .select(`
+            *,
+            garage:garages(name, location)
+          `)
+          .eq('id', id)
+          .single();
+
+        console.log('Second query by ID result:', { dataById, errorById });
+
+        if (errorById) {
+          setError('Mechanic not found or invalid QR code');
+          return;
+        }
+        
+        setMechanic(dataById);
+      } else {
+        setMechanic(data);
+      }
     } catch (err) {
       console.error('Error:', err);
       setError('Failed to verify mechanic');
@@ -89,6 +113,7 @@ const MechanicVerification = () => {
             </div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">Verification Failed</h2>
             <p className="text-gray-600">{error || 'Invalid QR code or mechanic not found'}</p>
+            <p className="text-sm text-gray-500 mt-2">Please ensure you're scanning a valid Revonn mechanic QR code</p>
           </CardContent>
         </Card>
       </div>
