@@ -102,8 +102,11 @@ const MechanicCard = ({ mechanic, garage, onMechanicChange }: MechanicCardProps)
               </Dialog>
 
               <MechanicActions 
-                mechanic={mechanic}
-                onMechanicChange={onMechanicChange}
+                mechanicId={mechanic.id}
+                mechanicName={mechanic.name}
+                currentStatus={mechanic.status}
+                onStatusChange={onMechanicChange}
+                onDelete={onMechanicChange}
               />
             </div>
           </div>

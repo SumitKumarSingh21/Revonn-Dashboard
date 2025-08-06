@@ -13,6 +13,7 @@ interface Mechanic {
   phone: string | null;
   email: string | null;
   mechanic_id: string;
+  photo_url: string | null;
   status: string;
   created_at: string;
   garage_id: string;
