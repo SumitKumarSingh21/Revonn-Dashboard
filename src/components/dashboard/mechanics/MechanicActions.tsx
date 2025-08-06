@@ -25,6 +25,7 @@ interface MechanicActionsProps {
   mechanicId: string;
   mechanicName: string;
   currentStatus: string;
+  photoUrl?: string | null;
   onStatusChange: () => void;
   onDelete: () => void;
 }
@@ -33,6 +34,7 @@ const MechanicActions = ({
   mechanicId, 
   mechanicName, 
   currentStatus, 
+  photoUrl,
   onStatusChange, 
   onDelete 
 }: MechanicActionsProps) => {
@@ -74,6 +76,22 @@ const MechanicActions = ({
   const handleDelete = async () => {
     setDeleting(true);
     try {
+      // Delete photo from storage if exists
+      if (photoUrl) {
+        const photoPath = photoUrl.split('/').pop();
+        if (photoPath) {
+          const { error: storageError } = await supabase.storage
+            .from('mechanic-photos')
+            .remove([photoPath]);
+          
+          if (storageError) {
+            console.error('Error deleting photo:', storageError);
+            // Continue with mechanic deletion even if photo deletion fails
+          }
+        }
+      }
+
+      // Delete mechanic record
       const { error } = await supabase
         .from("mechanics")
         .delete()
@@ -92,7 +110,7 @@ const MechanicActions = ({
       console.error("Error deleting mechanic:", error);
       toast({
         title: "Error",
-        description: "Failed to delete mechanic",
+        description: "Failed to delete mechanic. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -117,7 +135,7 @@ const MechanicActions = ({
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem onClick={toggleMechanicStatus} disabled={updating}>
               <Settings className="h-4 w-4 mr-2" />
-              {currentStatus === 'active' ? 'Deactivate' : 'Activate'}
+              {updating ? 'Updating...' : (currentStatus === 'active' ? 'Deactivate' : 'Activate')}
             </DropdownMenuItem>
             <DropdownMenuItem 
               onClick={() => setShowDeleteDialog(true)}
@@ -138,6 +156,7 @@ const MechanicActions = ({
             <AlertDialogDescription>
               Are you sure you want to delete <strong>{mechanicName}</strong>? 
               This action cannot be undone and will remove the mechanic from all future bookings.
+              {photoUrl && " The mechanic's photo will also be permanently deleted."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
