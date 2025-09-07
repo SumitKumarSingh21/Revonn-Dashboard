@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -813,7 +813,7 @@ export type Database = {
     }
     Functions: {
       add_comment: {
-        Args: { p_post_id: string; p_user_id: string; p_content: string }
+        Args: { p_content: string; p_post_id: string; p_user_id: string }
         Returns: undefined
       }
       check_user_liked_post: {
@@ -824,6 +824,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      generate_mechanic_verification_token: {
+        Args: { p_mechanic_id: number }
+        Returns: string
+      }
       generate_predefined_time_slots: {
         Args: { p_garage_id: string }
         Returns: undefined
@@ -831,11 +835,11 @@ export type Database = {
       get_post_comments: {
         Args: { p_post_id: string }
         Returns: {
-          id: string
           content: string
           created_at: string
-          user_id: string
+          id: string
           profiles: Json
+          user_id: string
         }[]
       }
       like_post: {
@@ -845,6 +849,14 @@ export type Database = {
       unlike_post: {
         Args: { p_post_id: string; p_user_id: string }
         Returns: undefined
+      }
+      verify_mechanic: {
+        Args: { p_mechanic_id: number; p_verification_token: string }
+        Returns: {
+          garage_name: string
+          is_verified: boolean
+          mechanic_name: string
+        }[]
       }
     }
     Enums: {
