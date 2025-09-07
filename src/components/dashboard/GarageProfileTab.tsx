@@ -59,6 +59,7 @@ const GarageProfileTab = ({ user }: GarageProfileTabProps) => {
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [showImageUpload, setShowImageUpload] = useState(false);
+  const [generatingBanner, setGeneratingBanner] = useState(false);
   const { toast } = useToast();
 
   // Helper function to safely parse working hours
@@ -207,6 +208,89 @@ const GarageProfileTab = ({ user }: GarageProfileTabProps) => {
     }
   };
 
+  const generateBanner = async () => {
+    if (!formData.name || !formData.location) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in garage name and location first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setGeneratingBanner(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-garage-banner', {
+        body: {
+          garageName: formData.name,
+          location: formData.location,
+          services: garage?.services || [],
+          rating: garage?.rating || 0,
+          reviewCount: garage?.review_count || 0
+        }
+      });
+
+      if (error) throw error;
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to generate banner');
+      }
+
+      // Convert base64 to blob and upload to storage
+      const base64Data = data.imageData;
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const bannerBlob = new Blob([byteArray], { type: 'image/webp' });
+
+      // Upload the generated banner
+      const fileName = `banner-${user.id}-${Date.now()}.webp`;
+      const { error: uploadError } = await supabase.storage
+        .from('garage-images')
+        .upload(fileName, bannerBlob);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('garage-images')
+        .getPublicUrl(fileName);
+
+      const imageUrl = urlData.publicUrl;
+
+      // Update garage with new banner
+      if (garage) {
+        const { error: updateError } = await supabase
+          .from("garages")
+          .update({ image_url: imageUrl })
+          .eq("id", garage.id);
+
+        if (updateError) throw updateError;
+        setGarage(prev => prev ? { ...prev, image_url: imageUrl } : null);
+      } else {
+        // Store for later save if garage doesn't exist yet
+        setImageFile(bannerBlob as any);
+      }
+
+      setShowImageUpload(false);
+      toast({
+        title: "Success",
+        description: "Professional banner generated successfully!"
+      });
+    } catch (error) {
+      console.error("Error generating banner:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to generate banner",
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingBanner(false);
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -318,32 +402,52 @@ const GarageProfileTab = ({ user }: GarageProfileTabProps) => {
 
           {/* Image Section */}
           <div className="space-y-2">
-            <Label>Garage Image</Label>
-            {garage?.image_url ? (
-              <div className="flex items-center gap-4">
-                <img 
-                  src={garage.image_url} 
-                  alt="Garage" 
-                  className="w-20 h-20 object-cover rounded-lg border"
-                />
-                <div className="flex flex-col gap-2">
-                  <p className="text-sm text-gray-600">Image uploaded successfully</p>
-                  <div className="flex gap-2">
+            <Label>Garage Banner</Label>
+            <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+              {garage?.image_url ? (
+                <div className="space-y-4">
+                  <div className="aspect-video w-full max-w-md mx-auto">
+                    <img 
+                      src={garage.image_url} 
+                      alt="Garage Banner" 
+                      className="w-full h-full object-cover rounded-lg border shadow-sm"
+                    />
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={generateBanner}
+                      disabled={saving || generatingBanner || !formData.name || !formData.location}
+                    >
+                      {generatingBanner ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Camera className="h-4 w-4 mr-1" />
+                          Generate New Banner
+                        </>
+                      )}
+                    </Button>
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
                       onClick={() => setShowImageUpload(true)}
-                      disabled={saving}
+                      disabled={saving || generatingBanner}
                     >
-                      Change Image
+                      Upload Custom
                     </Button>
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
                       onClick={handleRemoveImage}
-                      disabled={saving}
+                      disabled={saving || generatingBanner}
                       className="text-red-600 hover:text-red-700"
                     >
                       <X className="h-4 w-4 mr-1" />
@@ -351,42 +455,76 @@ const GarageProfileTab = ({ user }: GarageProfileTabProps) => {
                     </Button>
                   </div>
                 </div>
-              </div>
-            ) : showImageUpload ? (
-              <div className="flex items-center gap-4">
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                  className="max-w-xs"
-                />
-                {imageFile && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setImageFile(null);
-                      setShowImageUpload(false);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                )}
-              </div>
-            ) : (
-              <div className="flex items-center gap-4">
-                <p className="text-sm text-gray-600">No image uploaded</p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowImageUpload(true)}
-                >
-                  Add Image
-                </Button>
-              </div>
-            )}
+              ) : showImageUpload ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                      className="max-w-xs"
+                    />
+                    {imageFile && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setImageFile(null);
+                          setShowImageUpload(false);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center space-y-4 py-8">
+                  <Camera className="h-12 w-12 mx-auto text-gray-400" />
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No Banner Yet</h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Create a professional banner for your garage or upload your own image
+                    </p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Button
+                      type="button"
+                      variant="default"
+                      onClick={generateBanner}
+                      disabled={saving || generatingBanner || !formData.name || !formData.location}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      {generatingBanner ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Generating Banner...
+                        </>
+                      ) : (
+                        <>
+                          <Camera className="h-4 w-4 mr-2" />
+                          Generate AI Banner
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowImageUpload(true)}
+                      disabled={saving || generatingBanner}
+                    >
+                      Upload Custom Image
+                    </Button>
+                  </div>
+                  {(!formData.name || !formData.location) && (
+                    <p className="text-xs text-gray-500 mt-2">
+                      Please fill in garage name and location to generate a banner
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Current Stats */}
@@ -414,7 +552,7 @@ const GarageProfileTab = ({ user }: GarageProfileTabProps) => {
 
           <Button 
             onClick={handleSave} 
-            disabled={saving || !formData.name || !formData.location}
+            disabled={saving || generatingBanner || !formData.name || !formData.location}
             className="w-full"
           >
             {saving ? "Saving..." : garage ? "Update Profile" : "Create Profile"}
