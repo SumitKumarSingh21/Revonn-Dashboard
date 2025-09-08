@@ -238,24 +238,32 @@ const GarageProfileTab = ({ user }: GarageProfileTabProps) => {
 
       // Convert base64 to blob and upload to storage
       const base64Data = data.imageData;
-      const byteCharacters = atob(base64Data);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      
+      // Handle SVG format differently than binary formats
+      let bannerBlob;
+      let fileName;
+      if (data.imageFormat === 'svg') {
+        const svgContent = atob(base64Data);
+        bannerBlob = new Blob([svgContent], { type: 'image/svg+xml' });
+        fileName = `banner-${user.id}-${Date.now()}.svg`;
+      } else {
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        bannerBlob = new Blob([byteArray], { type: `image/${data.imageFormat}` });
+        fileName = `banner-${user.id}-${Date.now()}.${data.imageFormat}`;
       }
-      const byteArray = new Uint8Array(byteNumbers);
-      const bannerBlob = new Blob([byteArray], { type: 'image/webp' });
-
-      // Upload the generated banner
-      const fileName = `banner-${user.id}-${Date.now()}.webp`;
       const { error: uploadError } = await supabase.storage
-        .from('garage-images')
+        .from('garages')
         .upload(fileName, bannerBlob);
 
       if (uploadError) throw uploadError;
 
       const { data: urlData } = supabase.storage
-        .from('garage-images')
+        .from('garages')
         .getPublicUrl(fileName);
 
       const imageUrl = urlData.publicUrl;
