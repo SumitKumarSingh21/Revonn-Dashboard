@@ -153,7 +153,7 @@ const GarageProfileTab = ({ user }: GarageProfileTabProps) => {
   const handleImageUpload = async (file: File) => {
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
         .from('garages')
@@ -245,7 +245,7 @@ const GarageProfileTab = ({ user }: GarageProfileTabProps) => {
       if (data.imageFormat === 'svg') {
         const svgContent = atob(base64Data);
         bannerBlob = new Blob([svgContent], { type: 'image/svg+xml' });
-        fileName = `banner-${user.id}-${Date.now()}.svg`;
+        fileName = `${user.id}/banner-${Date.now()}.svg`;
       } else {
         const byteCharacters = atob(base64Data);
         const byteNumbers = new Array(byteCharacters.length);
@@ -254,7 +254,7 @@ const GarageProfileTab = ({ user }: GarageProfileTabProps) => {
         }
         const byteArray = new Uint8Array(byteNumbers);
         bannerBlob = new Blob([byteArray], { type: `image/${data.imageFormat}` });
-        fileName = `banner-${user.id}-${Date.now()}.${data.imageFormat}`;
+        fileName = `${user.id}/banner-${Date.now()}.${data.imageFormat}`;
       }
       const { error: uploadError } = await supabase.storage
         .from('garages')
