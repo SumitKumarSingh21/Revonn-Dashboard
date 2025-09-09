@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { DollarSign, TrendingUp, Calendar, CreditCard, IndianRupee } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
+import BankDetailsForm from "./BankDetailsForm";
 
 interface Earning {
   id: string;
@@ -15,9 +16,20 @@ interface Earning {
   bookings: { customer_name: string | null } | null;
 }
 
+interface GarageData {
+  id: string;
+  bank_account_number: string | null;
+  bank_ifsc_code: string | null;
+  bank_account_holder_name: string | null;
+  bank_upi_id: string | null;
+  bank_details_verified: boolean | null;
+}
+
 const EarningsTab = () => {
   const [earnings, setEarnings] = useState<Earning[]>([]);
   const [loading, setLoading] = useState(true);
+  const [garage, setGarage] = useState<GarageData | null>(null);
+  const [showBankForm, setShowBankForm] = useState(false);
   const [stats, setStats] = useState({
     totalEarnings: 0,
     monthlyEarnings: 0,
@@ -101,9 +113,9 @@ const EarningsTab = () => {
         return;
       }
 
-      const { data: garage, error: garageError } = await supabase
+      const { data: garageData, error: garageError } = await supabase
         .from("garages")
-        .select("id")
+        .select("id, bank_account_number, bank_ifsc_code, bank_account_holder_name, bank_upi_id, bank_details_verified")
         .eq("owner_id", user.user.id)
         .single();
 
@@ -112,12 +124,20 @@ const EarningsTab = () => {
         throw garageError;
       }
 
-      if (!garage) {
+      if (!garageData) {
         console.log("No garage found for user");
         return;
       }
 
-      console.log("Loading earnings for garage:", garage.id);
+      setGarage(garageData);
+      
+      // Check if bank details are missing
+      const hasBankDetails = garageData.bank_account_number && 
+                           garageData.bank_ifsc_code && 
+                           garageData.bank_account_holder_name;
+      setShowBankForm(!hasBankDetails);
+
+      console.log("Loading earnings for garage:", garageData.id);
 
       const { data, error } = await supabase
         .from("earnings")
@@ -125,7 +145,7 @@ const EarningsTab = () => {
           *,
           bookings (customer_name)
         `)
-        .eq("garage_id", garage.id)
+        .eq("garage_id", garageData.id)
         .order("transaction_date", { ascending: false });
 
       if (error) {
@@ -225,6 +245,11 @@ const EarningsTab = () => {
 
   const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'];
 
+  const handleBankDetailsSubmitted = () => {
+    setShowBankForm(false);
+    loadEarnings(); // Reload to get updated garage data
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -239,6 +264,48 @@ const EarningsTab = () => {
         <h2 className="text-2xl font-bold">Earnings</h2>
         <p className="text-gray-600">Real-time revenue tracking and financial performance</p>
       </div>
+
+      {/* Bank Details Form - Show if bank details are missing */}
+      {showBankForm && garage && (
+        <BankDetailsForm
+          garageId={garage.id}
+          onDetailsSubmitted={handleBankDetailsSubmitted}
+        />
+      )}
+
+      {/* Bank Status Info - Show if details exist but not verified */}
+      {!showBankForm && garage && !garage.bank_details_verified && garage.bank_account_number && (
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-yellow-800">
+              <CreditCard className="h-5 w-5" />
+              <div>
+                <p className="font-medium">Bank Details Under Verification</p>
+                <p className="text-sm text-yellow-700">
+                  Your bank account details are being verified. Payments will be processed once verification is complete.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Verified Bank Status */}
+      {!showBankForm && garage && garage.bank_details_verified && (
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-green-800">
+              <CreditCard className="h-5 w-5" />
+              <div>
+                <p className="font-medium">✅ Bank Details Verified</p>
+                <p className="text-sm text-green-700">
+                  Account: ****{garage.bank_account_number?.slice(-4)} | {garage.bank_ifsc_code}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

@@ -123,38 +123,102 @@ const MechanicIDCard = ({ mechanic, garage }: MechanicIDCardProps) => {
         }
       });
 
-      // Create a combined canvas with proper spacing
+      // Create a combined canvas with proper spacing and alignment
       const combinedCanvas = document.createElement('canvas');
-      const spacing = 60;
+      const spacing = 80; // Increased spacing between cards
+      const topMargin = 80; // More space for labels
+      const bottomMargin = 60; // Space for mechanic info
+      
       combinedCanvas.width = (frontCanvas.width * 2) + spacing;
-      combinedCanvas.height = frontCanvas.height + 100; // Extra space for labels
+      combinedCanvas.height = frontCanvas.height + topMargin + bottomMargin;
       const ctx = combinedCanvas.getContext('2d');
 
       if (ctx) {
-        // White background
+        // White background with subtle border
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, combinedCanvas.width, combinedCanvas.height);
         
-        // Add front side
-        ctx.drawImage(frontCanvas, 0, 50);
+        // Add subtle border around entire canvas
+        ctx.strokeStyle = '#e5e7eb';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(1, 1, combinedCanvas.width - 2, combinedCanvas.height - 2);
         
-        // Add back side with spacing
-        ctx.drawImage(backCanvas, frontCanvas.width + spacing, 50);
+        // Calculate centered positions for cards
+        const frontX = (frontCanvas.width / 2) - (frontCanvas.width / 2);
+        const backX = frontCanvas.width + spacing;
+        const cardY = topMargin;
         
-        // Add labels with better formatting
-        ctx.fillStyle = '#374151';
-        ctx.font = 'bold 28px Arial';
+        // Add front side with drop shadow effect
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
+        ctx.shadowBlur = 10;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 5;
+        ctx.drawImage(frontCanvas, frontX, cardY);
+        
+        // Add back side with drop shadow effect
+        ctx.drawImage(backCanvas, backX, cardY);
+        
+        // Reset shadow
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        
+        // Add labels with better typography
+        ctx.fillStyle = '#1f2937';
+        ctx.font = 'bold 32px "Arial", sans-serif';
         ctx.textAlign = 'center';
         
-        // Front label
-        ctx.fillText('FRONT', frontCanvas.width / 2, 35);
-        ctx.fillText('BACK', frontCanvas.width + spacing + (backCanvas.width / 2), 35);
+        // Add background rectangles for labels
+        const labelBgHeight = 40;
+        const labelY = 30;
         
-        // Add mechanic info at bottom
-        ctx.font = '20px Arial';
-        ctx.fillStyle = '#6b7280';
-        const bottomY = combinedCanvas.height - 20;
-        ctx.fillText(`${mechanic.name} - ID: ${mechanic.mechanic_id}`, combinedCanvas.width / 2, bottomY);
+        // Front label background
+        ctx.fillStyle = '#f3f4f6';
+        ctx.fillRect(frontX, labelY - 15, frontCanvas.width, labelBgHeight);
+        ctx.strokeStyle = '#d1d5db';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(frontX, labelY - 15, frontCanvas.width, labelBgHeight);
+        
+        // Back label background
+        ctx.fillRect(backX, labelY - 15, backCanvas.width, labelBgHeight);
+        ctx.strokeRect(backX, labelY - 15, backCanvas.width, labelBgHeight);
+        
+        // Front label text
+        ctx.fillStyle = '#1f2937';
+        ctx.fillText('FRONT', frontX + (frontCanvas.width / 2), labelY + 10);
+        
+        // Back label text
+        ctx.fillText('BACK', backX + (backCanvas.width / 2), labelY + 10);
+        
+        // Add mechanic info at bottom with better formatting
+        const bottomY = combinedCanvas.height - 25;
+        ctx.font = 'bold 24px "Arial", sans-serif';
+        ctx.fillStyle = '#374151';
+        ctx.textAlign = 'center';
+        
+        // Add background for bottom text
+        const textWidth = ctx.measureText(`${mechanic.name} - ID: ${mechanic.mechanic_id}`).width;
+        const textBgX = (combinedCanvas.width - textWidth) / 2 - 20;
+        const textBgY = bottomY - 35;
+        const textBgWidth = textWidth + 40;
+        const textBgHeight = 40;
+        
+        ctx.fillStyle = '#f9fafb';
+        ctx.fillRect(textBgX, textBgY, textBgWidth, textBgHeight);
+        ctx.strokeStyle = '#e5e7eb';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(textBgX, textBgY, textBgWidth, textBgHeight);
+        
+        // Bottom text
+        ctx.fillStyle = '#374151';
+        ctx.fillText(`${mechanic.name} - ID: ${mechanic.mechanic_id}`, combinedCanvas.width / 2, bottomY - 10);
+        
+        // Add small Revonn branding
+        ctx.font = '16px "Arial", sans-serif';
+        ctx.fillStyle = '#9ca3af';
+        ctx.textAlign = 'right';
+        ctx.fillText('Powered by Revonn', combinedCanvas.width - 20, combinedCanvas.height - 8);
       }
 
       // Download the combined image
