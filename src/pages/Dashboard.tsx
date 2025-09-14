@@ -15,20 +15,30 @@ import MechanicsTab from "@/components/dashboard/MechanicsTab";
 import NotificationsTab from "@/components/dashboard/NotificationsTab";
 import RevvyTab from "@/components/dashboard/RevvyTab";
 import TimeSlotManagement from "@/components/dashboard/TimeSlotManagement";
+import { VerificationTab } from "@/components/dashboard/VerificationTab";
 import GarageProfileSetup from "@/components/dashboard/GarageProfileSetup";
 import PushNotificationSetup from "@/components/PushNotificationSetup";
+import { VerificationBanner } from "@/components/verification/VerificationBanner";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("bookings");
   const [user, setUser] = useState<User | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [hasGarageProfile, setHasGarageProfile] = useState<boolean | null>(null);
+  const [garageData, setGarageData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { t } = useLanguage();
 
   useEffect(() => {
     checkUser();
+    
+    // Check for tab parameter in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
   }, []);
 
   const checkUser = async () => {
@@ -46,7 +56,7 @@ const Dashboard = () => {
     try {
       const { data: garage, error } = await supabase
         .from('garages')
-        .select('id')
+        .select('*, bank_verification(*)')
         .eq('owner_id', userId)
         .single();
 
@@ -55,6 +65,7 @@ const Dashboard = () => {
       }
 
       setHasGarageProfile(!!garage);
+      setGarageData(garage);
     } catch (error) {
       console.error('Error checking garage profile:', error);
       setHasGarageProfile(false);
@@ -121,6 +132,20 @@ const Dashboard = () => {
             </div>
           )}
 
+          {/* Verification Banner - Show on dashboard if verification incomplete */}
+          {garageData && (
+            <div className="mb-6">
+              <VerificationBanner
+                verificationStatus={garageData.verification_status}
+                badgeColor={garageData.verification_badge_color}
+                hasDocuments={garageData.verification_status !== 'pending'}
+                hasBankDetails={garageData.bank_verification && garageData.bank_verification.length > 0}
+                bankStatus={garageData.bank_verification?.[0]?.status}
+                onNavigateToVerification={() => setActiveTab('verification')}
+              />
+            </div>
+          )}
+
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsContent value="bookings">
               <BookingsTab />
@@ -142,6 +167,9 @@ const Dashboard = () => {
             </TabsContent>
             <TabsContent value="garage-profile">
               <GarageProfileTab user={user} />
+            </TabsContent>
+            <TabsContent value="verification">
+              <VerificationTab user={user} />
             </TabsContent>
             <TabsContent value="notifications">
               <NotificationsTab />
