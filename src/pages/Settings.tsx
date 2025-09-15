@@ -338,15 +338,23 @@ const Settings = () => {
             <CardContent>
               <div className="space-y-2">
                 <Label htmlFor="language">Language</Label>
-                <Select value={language} onValueChange={setLanguage}>
-                  <SelectTrigger className="w-full md:w-[200px]">
-                    <SelectValue placeholder="Select language" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="en">{t('english')}</SelectItem>
-                    <SelectItem value="hi">{t('hindi')}</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <Select value={language} onValueChange={setLanguage}>
+                    <SelectTrigger className="w-full md:w-[250px]">
+                      <SelectValue placeholder="Select language" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="en">{t('english')}</SelectItem>
+                      <SelectItem value="hi">{t('hindi')}</SelectItem>
+                      <SelectItem value="mr">{t('marathi')}</SelectItem>
+                      <SelectItem value="bn">{t('bengali')}</SelectItem>
+                      <SelectItem value="ta">{t('tamil')}</SelectItem>
+                      <SelectItem value="te">{t('telugu')}</SelectItem>
+                      <SelectItem value="gu">{t('gujarati')}</SelectItem>
+                      <SelectItem value="kn">{t('kannada')}</SelectItem>
+                      <SelectItem value="ml">{t('malayalam')}</SelectItem>
+                      <SelectItem value="pa">{t('punjabi')}</SelectItem>
+                    </SelectContent>
+                  </Select>
               </div>
             </CardContent>
           </Card>

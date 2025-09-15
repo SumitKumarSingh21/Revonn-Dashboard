@@ -40,7 +40,7 @@ const Sidebar = ({ activeTab, setActiveTab, isSidebarOpen, setIsSidebarOpen }: S
     { id: "earnings", label: t("earnings"), icon: DollarSign },
     { id: "reviews", label: t("reviews"), icon: Star },
     { id: "garage-profile", label: t("garageProfile"), icon: User },
-    { id: "verification", label: "Verification", icon: Shield },
+    { id: "verification", label: t("verification"), icon: Shield },
     { id: "notifications", label: t("notifications"), icon: Bell },
     { id: "revvy", label: t("revvy"), icon: Zap },
     { id: "settings", label: t("settings"), icon: Settings },

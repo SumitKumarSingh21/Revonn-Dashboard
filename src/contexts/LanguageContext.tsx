@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface LanguageContextType {
   language: string;
@@ -8,23 +9,38 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-// Comprehensive translations
+// Comprehensive translations for all dashboard elements
 const translations = {
   en: {
-    // Navigation
+    // Languages
+    english: "English",
+    hindi: "हिंदी",
+    marathi: "मराठी", 
+    bengali: "বাংলা",
+    tamil: "தமிழ்",
+    telugu: "తెలుగు",
+    gujarati: "ગુજરાતી",
+    kannada: "ಕನ್ನಡ",
+    malayalam: "മലയാളം",
+    punjabi: "ਪੰਜਾਬੀ",
+
+    // Navigation & Main Sections
     dashboard: "Dashboard",
-    bookings: "Bookings",
+    bookings: "Bookings", 
     services: "Services",
     timeslots: "Time Slots",
+    timeSlots: "Time Slots",
     mechanics: "Mechanics",
     earnings: "Earnings",
     reviews: "Reviews",
     profile: "Garage Profile",
+    garageProfile: "Garage Profile",
     notifications: "Notifications",
     revvy: "Revvy",
     settings: "Settings",
+    verification: "Verification",
     
-    // Common
+    // Common Actions
     save: "Save",
     cancel: "Cancel",
     edit: "Edit",
@@ -37,63 +53,191 @@ const translations = {
     sort: "Sort",
     status: "Status",
     message: "Message",
+    submit: "Submit",
+    confirm: "Confirm",
+    close: "Close",
+    view: "View",
+    approve: "Approve",
+    reject: "Reject",
+    upload: "Upload",
+    download: "Download",
+    back: "Back",
+    next: "Next",
+    previous: "Previous",
+    signOut: "Sign Out",
+    backToDashboard: "Back to Dashboard",
     
-    // Bookings
+    // Status Labels
+    pending: "Pending",
+    confirmed: "Confirmed", 
+    completed: "Completed",
+    cancelled: "Cancelled",
+    active: "Active",
+    inactive: "Inactive",
+    verified: "Verified",
+    unverified: "Unverified",
+    approved: "Approved",
+    rejected: "Rejected",
+    provisional: "Provisional",
+    certified: "Certified",
+    
+    // Bookings Section
     manageBookings: "Manage customer appointments and mechanic assignments",
     bookingDetails: "Booking Details",
     customerInfo: "Customer Information",
+    customerInformation: "Customer Information",
     selectServices: "Select Services",
     availableSlots: "Available Time Slots",
     totalAmount: "Total Amount",
     bookingStatus: "Booking Status",
-    pending: "Pending",
-    confirmed: "Confirmed",
-    completed: "Completed",
-    cancelled: "Cancelled",
-    
-    // Time Slots
-    predefinedSlots: "Predefined Slots",
-    customSlots: "Custom Slots",
-    enableAll: "Enable All",
-    disableAll: "Disable All",
-    available: "Available",
-    unavailable: "Unavailable",
-    
-    // Services
-    serviceName: "Service Name",
-    servicePrice: "Price",
-    serviceDuration: "Duration",
-    serviceCategory: "Category",
-    addService: "Add Service",
-    editService: "Edit Service",
-    
-    // Mechanics
-    mechanicName: "Mechanic Name",
-    mechanicPhone: "Phone",
-    mechanicEmail: "Email",
-    mechanicId: "Mechanic ID",
     assignMechanic: "Assign Mechanic",
+    mechanicAssignment: "Mechanic Assignment",
+    bookingDate: "Booking Date",
+    bookingTime: "Booking Time",
     
-    // Customer Form
+    // Customer Details
     customerName: "Customer Name",
     customerPhone: "Phone Number",
     customerEmail: "Email Address",
     vehicleMake: "Vehicle Make",
     vehicleModel: "Vehicle Model",
+    vehicleType: "Vehicle Type",
     additionalNotes: "Additional Notes",
     selectDate: "Select Date",
+    paymentMethod: "Payment Method",
     
-    // Messages
+    // Time Slots Management
+    predefinedSlots: "Predefined Slots",
+    customSlots: "Custom Slots", 
+    enableAll: "Enable All",
+    disableAll: "Disable All",
+    available: "Available",
+    unavailable: "Unavailable",
+    timeSlotManagement: "Time Slot Management",
+    
+    // Services Management
+    serviceName: "Service Name",
+    servicePrice: "Price",
+    serviceDuration: "Duration", 
+    serviceCategory: "Category",
+    addService: "Add Service",
+    editService: "Edit Service",
+    serviceDescription: "Service Description",
+    addServiceFromCatalog: "Add Service from Catalog",
+    customService: "Custom Service",
+    
+    // Mechanics Management
+    mechanicName: "Mechanic Name",
+    mechanicPhone: "Phone",
+    mechanicEmail: "Email",
+    mechanicId: "Mechanic ID",
+    mechanicPhoto: "Mechanic Photo",
+    mechanicStatus: "Mechanic Status",
+    addMechanic: "Add Mechanic",
+    editMechanic: "Edit Mechanic",
+    
+    // Earnings & Financial
+    totalEarnings: "Total Earnings",
+    monthlyEarnings: "Monthly Earnings",
+    weeklyEarnings: "Weekly Earnings",
+    dailyEarnings: "Daily Earnings",
+    payoutHistory: "Payout History",
+    bankDetails: "Bank Details",
+    addBankDetails: "Add Bank Details",
+    bankVerification: "Bank Verification",
+    accountNumber: "Account Number",
+    ifscCode: "IFSC Code",
+    accountHolderName: "Account Holder Name",
+    bankName: "Bank Name",
+    accountType: "Account Type",
+    upiId: "UPI ID",
+    savingsAccount: "Savings Account",
+    currentAccount: "Current Account",
+    
+    // Verification System
+    documentVerification: "Document Verification",
+    identityProof: "Identity Proof",
+    garagePhoto: "Garage Photo",
+    addressProof: "Address Proof",
+    businessProof: "Business Proof",
+    bankProof: "Bank Proof",
+    uploadDocument: "Upload Document",
+    documentStatus: "Document Status",
+    verificationStatus: "Verification Status",
+    verificationBadge: "Verification Badge",
+    documentsRequired: "Documents Required",
+    
+    // Profile & Settings
+    profileInformation: "Profile Information",
+    garageInformation: "Garage Information",
+    fullName: "Full Name",
+    username: "Username",
+    bio: "Bio",
+    phoneNumber: "Phone Number",
+    location: "Location",
+    garageName: "Garage Name",
+    garageLocation: "Garage Location",
+    workingHours: "Working Hours",
+    
+    // Language & Preferences
+    languagePreferences: "Language Preferences",
+    selectLanguage: "Select your preferred language",
+    languageUpdated: "Language updated successfully",
+    
+    // Notifications
+    notificationPreferences: "Notification Preferences",
+    emailNotifications: "Email Notifications",
+    pushNotifications: "Push Notifications",
+    bookingNotifications: "Booking Notifications",
+    paymentNotifications: "Payment Notifications",
+    reviewNotifications: "Review Notifications",
+    verificationNotifications: "Verification Notifications",
+    receiveViaEmail: "Receive notifications via email",
+    newBookings: "Get notified about new bookings",
+    getPaymentNotified: "Get notified about payments",
+    newReviews: "Get notified about new reviews",
+    
+    // Messages & Alerts
     success: "Success",
     error: "Error",
+    warning: "Warning",
+    info: "Information",
     bookingCreated: "Booking created successfully",
     bookingUpdated: "Booking updated successfully",
     serviceAdded: "Service added successfully",
     mechanicAssigned: "Mechanic assigned successfully",
+    profileUpdated: "Profile updated successfully",
+    settingsSaved: "Settings saved successfully",
+    documentUploaded: "Document uploaded successfully",
+    bankDetailsAdded: "Bank details added successfully",
+    verificationPending: "Verification is pending",
+    verificationApproved: "Verification approved",
+    verificationRejected: "Verification rejected",
+    
+    // Error Messages
+    failedUpdate: "Failed to update",
+    failedUpload: "Failed to upload",
+    failedSave: "Failed to save",
+    failedDelete: "Failed to delete",
+    failedSignOut: "Failed to sign out",
+    accountDeleted: "Account Deleted",
+    profileDeleted: "Your profile has been deleted permanently",
+    
+    // General Terms
+    manageAccount: "Manage your account settings and preferences",
+    updatePersonal: "Update your personal information",
+    tellAboutYourself: "Tell us about yourself",
+    enterFullName: "Enter your full name",
+    enterUsername: "Enter your username",
+    enterPhoneNumber: "Enter your phone number",
+    enterLocation: "Enter your location",
+    saveProfile: "Save Profile",
+    saving: "Saving...",
+    manageNotifications: "Manage how you receive notifications",
     
     // Service Categories
     "AC & Cooling": "AC & Cooling",
-    "Body Work": "Body Work",
+    "Body Work": "Body Work", 
     "Brakes": "Brakes",
     "Custom": "Custom",
     "Diagnostic": "Diagnostic",
@@ -107,7 +251,7 @@ const translations = {
     
     // Vehicle Types
     "car": "Car",
-    "bike": "Bike",
+    "bike": "Bike", 
     "both": "Both",
     
     // Service Names - Car Services
@@ -182,22 +326,57 @@ const translations = {
     "Insurance Claim Work": "Insurance Claim Work",
     "Accidental Repair": "Accidental Repair",
     "Number Plate Fitting": "Number Plate Fitting",
+    
+    // Additional UI Elements
+    "All Categories": "All Categories",
+    "Select a Service": "Select a Service",
+    "Choose from our comprehensive list of predefined services": "Choose from our comprehensive list of predefined services",
+    "Search services...": "Search services...",
+    "All": "All",
+    "Car": "Car",
+    "Bike": "Bike",
+    "min": "min",
+    "Add Service from Catalog": "Add Service from Catalog",
+    
+    // Verification Messages
+    "Upload documents to verify your garage and start earning.": "Upload documents to verify your garage and start earning.",
+    "Add bank details to enable payouts.": "Add bank details to enable payouts.",
+    "Bank verification in progress.": "Bank verification in progress.",
+    "Bank verification failed — please re-upload.": "Bank verification failed — please re-upload.",
+    "Verify documents to unlock Earnings and Payouts.": "Verify documents to unlock Earnings and Payouts.",
+    "Add bank account to receive payouts.": "Add bank account to receive payouts.",
+    "Your bank verification is pending.": "Your bank verification is pending.",
   },
   hi: {
-    // Navigation
+    // Languages
+    english: "English",
+    hindi: "हिंदी",
+    marathi: "मराठी",
+    bengali: "বাংলা", 
+    tamil: "தமிழ்",
+    telugu: "తెలుగు",
+    gujarati: "ગુજરાતી",
+    kannada: "ಕನ್ನಡ",
+    malayalam: "മലയാളം",
+    punjabi: "ਪੰਜਾਬੀ",
+
+    // Navigation & Main Sections
     dashboard: "डैशबोर्ड",
     bookings: "बुकिंग",
     services: "सेवाएं",
     timeslots: "समय स्लॉट",
+    timeSlots: "समय स्लॉट",
     mechanics: "मैकेनिक",
     earnings: "आय",
     reviews: "समीक्षा",
     profile: "गैराज प्रोफ़ाइल",
+    garageProfile: "गैराज प्रोफ़ाइल",
     notifications: "सूचनाएं",
     revvy: "रेव्वी",
     settings: "सेटिंग्स",
+    verification: "सत्यापन",
     
-    // Common
+    // Common Actions
     save: "सेव करें",
     cancel: "रद्द करें",
     edit: "संपादित करें",
@@ -210,59 +389,187 @@ const translations = {
     sort: "क्रमबद्ध करें",
     status: "स्थिति",
     message: "संदेश",
+    submit: "प्रस्तुत करें",
+    confirm: "पुष्टि करें",
+    close: "बंद करें",
+    view: "देखें",
+    approve: "अनुमोदित करें",
+    reject: "अस्वीकार करें",
+    upload: "अपलोड करें",
+    download: "डाउनलोड करें",
+    back: "वापस",
+    next: "अगला",
+    previous: "पिछला",
+    signOut: "साइन आउट",
+    backToDashboard: "डैशबोर्ड पर वापस",
     
-    // Bookings
-    manageBookings: "ग्राहक अपॉइंटमेंट और मैकेनिक असाइनमेंट प्रबंधित करें",
-    bookingDetails: "बुकिंग विवरण",
-    customerInfo: "ग्राहक की जानकारी",
-    selectServices: "सेवाएं चुनें",
-    availableSlots: "उपलब्ध समय स्लॉट",
-    totalAmount: "कुल राशि",
-    bookingStatus: "बुकिंग स्थिति",
+    // Status Labels
     pending: "लंबित",
     confirmed: "पुष्ट",
     completed: "पूर्ण",
     cancelled: "रद्द",
+    active: "सक्रिय",
+    inactive: "निष्क्रिय",
+    verified: "सत्यापित",
+    unverified: "असत्यापित",
+    approved: "अनुमोदित",
+    rejected: "अस्वीकृत",
+    provisional: "अस्थायी",
+    certified: "प्रमाणित",
     
-    // Time Slots
+    // Bookings Section
+    manageBookings: "ग्राहक अपॉइंटमेंट और मैकेनिक असाइनमेंट प्रबंधित करें",
+    bookingDetails: "बुकिंग विवरण",
+    customerInfo: "ग्राहक की जानकारी",
+    customerInformation: "ग्राहक की जानकारी",
+    selectServices: "सेवाएं चुनें",
+    availableSlots: "उपलब्ध समय स्लॉट",
+    totalAmount: "कुल राशि",
+    bookingStatus: "बुकिंग स्थिति",
+    assignMechanic: "मैकेनिक असाइन करें",
+    mechanicAssignment: "मैकेनिक असाइनमेंट",
+    bookingDate: "बुकिंग तारीख",
+    bookingTime: "बुकिंग समय",
+    
+    // Customer Details
+    customerName: "ग्राहक का नाम",
+    customerPhone: "फोन नंबर",
+    customerEmail: "ईमेल पता",
+    vehicleMake: "वाहन मेक",
+    vehicleModel: "वाहन मॉडल",
+    vehicleType: "वाहन प्रकार",
+    additionalNotes: "अतिरिक्त नोट्स",
+    selectDate: "तारीख चुनें",
+    paymentMethod: "भुगतान का तरीका",
+    
+    // Time Slots Management
     predefinedSlots: "पूर्व निर्धारित स्लॉट",
     customSlots: "कस्टम स्लॉट",
     enableAll: "सभी सक्षम करें",
     disableAll: "सभी अक्षम करें",
     available: "उपलब्ध",
     unavailable: "अनुपलब्ध",
+    timeSlotManagement: "समय स्लॉट प्रबंधन",
     
-    // Services
+    // Services Management
     serviceName: "सेवा का नाम",
     servicePrice: "मूल्य",
     serviceDuration: "अवधि",
     serviceCategory: "श्रेणी",
     addService: "सेवा जोड़ें",
     editService: "सेवा संपादित करें",
+    serviceDescription: "सेवा विवरण",
+    addServiceFromCatalog: "कैटलॉग से सेवा जोड़ें",
+    customService: "कस्टम सेवा",
     
-    // Mechanics
+    // Mechanics Management
     mechanicName: "मैकेनिक का नाम",
     mechanicPhone: "फोन",
     mechanicEmail: "ईमेल",
     mechanicId: "मैकेनिक आईडी",
-    assignMechanic: "मैकेनिक असाइन करें",
+    mechanicPhoto: "मैकेनिक फोटो",
+    mechanicStatus: "मैकेनिक स्थिति",
+    addMechanic: "मैकेनिक जोड़ें",
+    editMechanic: "मैकेनिक संपादित करें",
     
-    // Customer Form
-    customerName: "ग्राहक का नाम",
-    customerPhone: "फोन नंबर",
-    customerEmail: "ईमेल पता",
-    vehicleMake: "वाहन मेक",
-    vehicleModel: "वाहन मॉडल",
-    additionalNotes: "अतिरिक्त नोट्स",
-    selectDate: "तारीख चुनें",
+    // Earnings & Financial
+    totalEarnings: "कुल आय",
+    monthlyEarnings: "मासिक आय",
+    weeklyEarnings: "साप्ताहिक आय",
+    dailyEarnings: "दैनिक आय",
+    payoutHistory: "भुगतान इतिहास",
+    bankDetails: "बैंक विवरण",
+    addBankDetails: "बैंक विवरण जोड़ें",
+    bankVerification: "बैंक सत्यापन",
+    accountNumber: "खाता संख्या",
+    ifscCode: "आईएफएससी कोड",
+    accountHolderName: "खाता धारक का नाम",
+    bankName: "बैंक का नाम",
+    accountType: "खाता प्रकार",
+    upiId: "यूपीआई आईडी",
+    savingsAccount: "बचत खाता",
+    currentAccount: "चालू खाता",
     
-    // Messages
+    // Verification System
+    documentVerification: "दस्तावेज़ सत्यापन",
+    identityProof: "पहचान प्रमाण",
+    garagePhoto: "गैराज फोटो",
+    addressProof: "पता प्रमाण",
+    businessProof: "व्यापार प्रमाण",
+    bankProof: "बैंक प्रमाण",
+    uploadDocument: "दस्तावेज़ अपलोड करें",
+    documentStatus: "दस्तावेज़ स्थिति",
+    verificationStatus: "सत्यापन स्थिति",
+    verificationBadge: "सत्यापन बैज",
+    documentsRequired: "आवश्यक दस्तावेज़",
+    
+    // Profile & Settings
+    profileInformation: "प्रोफ़ाइल जानकारी",
+    garageInformation: "गैराज जानकारी",
+    fullName: "पूरा नाम",
+    username: "उपयोगकर्ता नाम",
+    bio: "परिचय",
+    phoneNumber: "फोन नंबर",
+    location: "स्थान",
+    garageName: "गैराज का नाम",
+    garageLocation: "गैराज स्थान",
+    workingHours: "कार्य घंटे",
+    
+    // Language & Preferences
+    languagePreferences: "भाषा वरीयताएं",
+    selectLanguage: "अपनी पसंदीदा भाषा चुनें",
+    languageUpdated: "भाषा सफलतापूर्वक अपडेट की गई",
+    
+    // Notifications
+    notificationPreferences: "सूचना वरीयताएं",
+    emailNotifications: "ईमेल सूचनाएं",
+    pushNotifications: "पुश सूचनाएं",
+    bookingNotifications: "बुकिंग सूचनाएं",
+    paymentNotifications: "भुगतान सूचनाएं",
+    reviewNotifications: "समीक्षा सूचनाएं",
+    verificationNotifications: "सत्यापन सूचनाएं",
+    receiveViaEmail: "ईमेल के माध्यम से सूचनाएं प्राप्त करें",
+    newBookings: "नई बुकिंग के बारे में सूचित हों",
+    getPaymentNotified: "भुगतान के बारे में सूचित हों",
+    newReviews: "नई समीक्षाओं के बारे में सूचित हों",
+    
+    // Messages & Alerts
     success: "सफलता",
     error: "त्रुटि",
+    warning: "चेतावनी",
+    info: "जानकारी",
     bookingCreated: "बुकिंग सफलतापूर्वक बनाई गई",
     bookingUpdated: "बुकिंग सफलतापूर्वक अपडेट की गई",
     serviceAdded: "सेवा सफलतापूर्वक जोड़ी गई",
     mechanicAssigned: "मैकेनिक सफलतापूर्वक असाइन किया गया",
+    profileUpdated: "प्रोफ़ाइल सफलतापूर्वक अपडेट की गई",
+    settingsSaved: "सेटिंग्स सफलतापूर्वक सेव की गईं",
+    documentUploaded: "दस्तावेज़ सफलतापूर्वक अपलोड किया गया",
+    bankDetailsAdded: "बैंक विवरण सफलतापूर्वक जोड़े गए",
+    verificationPending: "सत्यापन लंबित है",
+    verificationApproved: "सत्यापन अनुमोदित",
+    verificationRejected: "सत्यापन अस्वीकृत",
+    
+    // Error Messages
+    failedUpdate: "अपडेट करने में विफल",
+    failedUpload: "अपलोड करने में विफल",
+    failedSave: "सेव करने में विफल",
+    failedDelete: "हटाने में विफल",
+    failedSignOut: "साइन आउट करने में विफल",
+    accountDeleted: "खाता हटा दिया गया",
+    profileDeleted: "आपकी प्रोफ़ाइल स्थायी रूप से हटा दी गई है",
+    
+    // General Terms
+    manageAccount: "अपनी खाता सेटिंग्स और वरीयताओं को प्रबंधित करें",
+    updatePersonal: "अपनी व्यक्तिगत जानकारी अपडेट करें",
+    tellAboutYourself: "अपने बारे में बताएं",
+    enterFullName: "अपना पूरा नाम दर्ज करें",
+    enterUsername: "अपना उपयोगकर्ता नाम दर्ज करें",
+    enterPhoneNumber: "अपना फोन नंबर दर्ज करें",
+    enterLocation: "अपना स्थान दर्ज करें",
+    saveProfile: "प्रोफ़ाइल सेव करें",
+    saving: "सेव हो रहा है...",
+    manageNotifications: "प्रबंधित करें कि आप सूचनाएं कैसे प्राप्त करते हैं",
     
     // Service Categories
     "AC & Cooling": "एसी और कूलिंग",
@@ -356,7 +663,7 @@ const translations = {
     "Accidental Repair": "एक्सीडेंटल रिपेयर",
     "Number Plate Fitting": "नंबर प्लेट फिटिंग",
     
-    // Additional UI strings
+    // Additional UI Elements
     "All Categories": "सभी श्रेणियां",
     "Select a Service": "एक सेवा चुनें",
     "Choose from our comprehensive list of predefined services": "हमारी पूर्व-निर्धारित सेवाओं की व्यापक सूची से चुनें",
@@ -366,7 +673,147 @@ const translations = {
     "Bike": "बाइक",
     "min": "मिनट",
     "Add Service from Catalog": "कैटलॉग से सेवा जोड़ें",
-    "Close": "बंद करें",
+    
+    // Verification Messages
+    "Upload documents to verify your garage and start earning.": "अपने गैराज को सत्यापित करने और कमाई शुरू करने के लिए दस्तावेज़ अपलोड करें।",
+    "Add bank details to enable payouts.": "भुगतान सक्षम करने के लिए बैंक विवरण जोड़ें।",
+    "Bank verification in progress.": "बैंक सत्यापन प्रगति में है।",
+    "Bank verification failed — please re-upload.": "बैंक सत्यापन विफल - कृपया पुनः अपलोड करें।",
+    "Verify documents to unlock Earnings and Payouts.": "आय और भुगतान अनलॉक करने के लिए दस्तावेज़ सत्यापित करें।",
+    "Add bank account to receive payouts.": "भुगतान प्राप्त करने के लिए बैंक खाता जोड़ें।",
+    "Your bank verification is pending.": "आपका बैंक सत्यापन लंबित है।",
+  },
+  mr: {
+    // Languages
+    english: "English",
+    hindi: "हिंदी",
+    marathi: "मराठी",
+    bengali: "বাংলা",
+    tamil: "தமிழ்",
+    telugu: "తెలుగు",
+    gujarati: "ગુજરાતી",
+    kannada: "ಕನ್ನಡ",
+    malayalam: "മലയാളം",
+    punjabi: "ਪੰਜਾਬੀ",
+
+    // Navigation & Main Sections
+    dashboard: "डॅशबोर्ड",
+    bookings: "बुकिंग",
+    services: "सेवा",
+    timeslots: "वेळ स्लॉट",
+    timeSlots: "वेळ स्लॉट",
+    mechanics: "मेकॅनिक",
+    earnings: "कमाई",
+    reviews: "पुनरावलोकने",
+    profile: "गॅरेज प्रोफाइल",
+    garageProfile: "गॅरेज प्रोफाइल",
+    notifications: "सूचना",
+    revvy: "रेव्हि",
+    settings: "सेटिंग्ज",
+    verification: "पडताळणी",
+    
+    // Common Actions
+    save: "जतन करा",
+    cancel: "रद्द करा",
+    edit: "संपादित करा",
+    delete: "हटवा",
+    add: "जोडा",
+    update: "अपडेट करा",
+    loading: "लोड होत आहे...",
+    search: "शोधा",
+    filter: "फिल्टर",
+    sort: "क्रमवारी लावा",
+    status: "स्थिती",
+    message: "संदेश",
+    submit: "सबमिट करा",
+    confirm: "पुष्टी करा",
+    close: "बंद करा",
+    view: "पहा",
+    approve: "मंजूर करा",
+    reject: "नाकारा",
+    upload: "अपलोड करा",
+    download: "डाउनलोड करा",
+    back: "मागे",
+    next: "पुढे",
+    previous: "मागील",
+    signOut: "साइन आउट",
+    backToDashboard: "डॅशबोर्डवर परत जा",
+    
+    // Status Labels
+    pending: "प्रलंबित",
+    confirmed: "पुष्ट",
+    completed: "पूर्ण",
+    cancelled: "रद्द",
+    active: "सक्रिय",
+    inactive: "निष्क्रिय",
+    verified: "पडताळली",
+    unverified: "अपडताळली",
+    approved: "मंजूर",
+    rejected: "नाकारली",
+    provisional: "तात्पुरती",
+    certified: "प्रमाणित",
+    
+    // Additional terms for comprehensive coverage
+    manageBookings: "ग्राहक भेटी आणि मेकॅनिक नियुक्ती व्यवस्थापित करा",
+    languagePreferences: "भाषा प्राधान्ये",
+    selectLanguage: "तुमची पसंतीची भाषा निवडा",
+    languageUpdated: "भाषा यशस्वीरित्या अपडेट केली",
+    
+    // Verification Messages
+    "Upload documents to verify your garage and start earning.": "तुमचे गॅरेज सत्यापित करण्यासाठी आणि कमाई सुरू करण्यासाठी कागदपत्रे अपलोड करा।",
+    "Add bank details to enable payouts.": "पेआउट सक्षम करण्यासाठी बँक तपशील जोडा।",
+    "Bank verification in progress.": "बँक पडताळणी प्रगतीत आहे।",
+    "Your bank verification is pending.": "तुमची बँक पडताळणी प्रलंबित आहे।",
+  },
+  // Adding more languages with basic translations
+  bn: {
+    english: "English", hindi: "हिंदी", marathi: "মराঠি", bengali: "বাংলা", tamil: "তামিল", telugu: "তেলুগু", gujarati: "গুজরাটি", kannada: "কন্নড়", malayalam: "মালয়ালম", punjabi: "পাঞ্জাবি",
+    dashboard: "ড্যাশবোর্ড", bookings: "বুকিং", services: "সেবা", timeSlots: "সময় স্লট", mechanics: "মেকানিক", earnings: "আয়", reviews: "পর্যালোচনা", verification: "যাচাইকরণ", settings: "সেটিংস",
+    languagePreferences: "ভাষার পছন্দ", selectLanguage: "আপনার পছন্দের ভাষা নির্বাচন করুন", languageUpdated: "ভাষা সফলভাবে আপডেট করা হয়েছে",
+    "Upload documents to verify your garage and start earning.": "আপনার গ্যারেজ যাচাই করতে এবং আয় শুরু করতে নথি আপলোড করুন।",
+    "Your bank verification is pending.": "আপনার ব্যাংক যাচাইকরণ মুলতুবি রয়েছে।",
+  },
+  ta: {
+    english: "English", hindi: "हिंदी", marathi: "मराठी", bengali: "বাংলা", tamil: "தமிழ்", telugu: "తెలుగు", gujarati: "ગુજરાતી", kannada: "ಕನ್ನಡ", malayalam: "മലയാളം", punjabi: "ਪੰਜਾਬੀ",
+    dashboard: "டாஷ்போர்டு", bookings: "முன்பதிவுகள்", services: "சேவைகள்", timeSlots: "நேர இடைவெளிகள்", mechanics: "மெக்கானிக்", earnings: "வருமானம்", reviews: "மதிப்புரைகள்", verification: "சரிபார்ப்பு", settings: "அமைப்புகள்",
+    languagePreferences: "மொழி விருப்பத்தேர்வுகள்", selectLanguage: "உங்கள் விருப்ப மொழியைத் தேர்ந்தெடுக்கவும்", languageUpdated: "மொழி வெற்றிகரமாக புதுப்பிக்கப்பட்டது",
+    "Upload documents to verify your garage and start earning.": "உங்கள் கிராஜை சரிபார்க்கவும் வருமானம் தொடங்கவும் ஆவணங்களை பதிவேற்றவும்।",
+    "Your bank verification is pending.": "உங்கள் வங்கி சரிபார்ப்பு நிலுவையில் உள்ளது।",
+  },
+  te: {
+    english: "English", hindi: "हिंदी", marathi: "मराठी", bengali: "বাংলা", tamil: "தமிழ்", telugu: "తెలుగు", gujarati: "ગુજરાતી", kannada: "ಕನ್ನಡ", malayalam: "മലയാളം", punjabi: "ਪੰਜਾਬੀ",
+    dashboard: "డాష్‌బోర్డ్", bookings: "బుకింగ్‌లు", services: "సేవలు", timeSlots: "సమయ స్లాట్‌లు", mechanics: "మెకానిక్", earnings: "ఆదాయాలు", reviews: "సమీక్షలు", verification: "ధృవీకరణ", settings: "సెట్టింగులు",
+    languagePreferences: "భాష ప్రాధాన్యతలు", selectLanguage: "మీ ఇష్టమైన భాషను ఎంచుకోండి", languageUpdated: "భాష విజయవంతంగా అప్‌డేట్ చేయబడింది",
+    "Upload documents to verify your garage and start earning.": "మీ గ్యారేజీని ధృవీకరించడానికి మరియు సంపాదన ప్రారంభించడానికి పత్రాలను అప్‌లోడ్ చేయండి।",
+    "Your bank verification is pending.": "మీ బ్యాంక్ ధృవీకరణ పెండింగ్‌లో ఉంది।",
+  },
+  gu: {
+    english: "English", hindi: "हिंदी", marathi: "मराठी", bengali: "বাংলা", tamil: "தமிழ்", telugu: "తెలుగు", gujarati: "ગુજરાતી", kannada: "ಕನ್ನಡ", malayalam: "മലയാളം", punjabi: "ਪੰਜਾਬੀ",
+    dashboard: "ડેશબોર્ડ", bookings: "બુકિંગ", services: "સેવાઓ", timeSlots: "સમય સ્લોટ", mechanics: "મિકેનિક", earnings: "કમાણી", reviews: "સમીક્ષાઓ", verification: "ચકાસણી", settings: "સેટિંગ્સ",
+    languagePreferences: "ભાષા પસંદગીઓ", selectLanguage: "તમારી પસંદીદા ભાષા પસંદ કરો", languageUpdated: "ભાષા સફળતાપૂર્વક અપડેટ થઈ",
+    "Upload documents to verify your garage and start earning.": "તમારા ગેરેજને ચકાસવા અને કમાણી શરૂ કરવા માટે દસ્તાવેજો અપલોડ કરો।",
+    "Your bank verification is pending.": "તમારી બેંક ચકાસણી બાકી છે।",
+  },
+  kn: {
+    english: "English", hindi: "हिंदी", marathi: "मराठी", bengali: "বাংলা", tamil: "தமிழ்", telugu: "తెలుగు", gujarati: "ગુજરાતી", kannada: "ಕನ್ನಡ", malayalam: "മലയാളം", punjabi: "ਪੰਜਾਬੀ",
+    dashboard: "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್", bookings: "ಬುಕಿಂಗ್‌ಗಳು", services: "ಸೇವೆಗಳು", timeSlots: "ಸಮಯ ಸ್ಲಾಟ್‌ಗಳು", mechanics: "ಮೆಕ್ಯಾನಿಕ್", earnings: "ಗಳಿಕೆಗಳು", reviews: "ವಿಮರ್ಶೆಗಳು", verification: "ಪರಿಶೀಲನೆ", settings: "ಸೆಟ್ಟಿಂಗ್‌ಗಳು",
+    languagePreferences: "ಭಾಷೆಯ ಆದ್ಯತೆಗಳು", selectLanguage: "ನಿಮ್ಮ ಆದ್ಯತೆಯ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ", languageUpdated: "ಭಾಷೆಯನ್ನು ಯಶಸ್ವಿಯಾಗಿ ನವೀಕರಿಸಲಾಗಿದೆ",
+    "Upload documents to verify your garage and start earning.": "ನಿಮ್ಮ ಗ್ಯಾರೇಜ್ ಅನ್ನು ಪರಿಶೀಲಿಸಲು ಮತ್ತು ಗಳಿಕೆಯನ್ನು ಪ್ರಾರಂಭಿಸಲು ದಾಖಲೆಗಳನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ।",
+    "Your bank verification is pending.": "ನಿಮ್ಮ ಬ್ಯಾಂಕ್ ಪರಿಶೀಲನೆ ಬಾಕಿ ಇದೆ।",
+  },
+  ml: {
+    english: "English", hindi: "हिंदी", marathi: "मराठी", bengali: "বাংলা", tamil: "தமிழ்", telugu: "తెలుగు", gujarati: "ગુજરાતી", kannada: "ಕನ್ನಡ", malayalam: "മലയാളം", punjabi: "ਪੰਜਾਬੀ",
+    dashboard: "ഡാഷ്‌ബോർഡ്", bookings: "ബുക്കിങ്ങുകൾ", services: "സേവനങ്ങൾ", timeSlots: "സമയ സ്ലോട്ടുകൾ", mechanics: "മെക്കാനിക്", earnings: "വരുമാനം", reviews: "റിവ്യൂകൾ", verification: "പരിശോധന", settings: "സെറ്റിംഗുകൾ",
+    languagePreferences: "ഭാഷാ മുൻഗണനകൾ", selectLanguage: "നിങ്ങളുടെ ഇഷ്ട ഭാഷ തിരഞ്ഞെടുക്കുക", languageUpdated: "ഭാഷ വിജയകരമായി അപ്ഡേറ്റ് ചെയ്തു",
+    "Upload documents to verify your garage and start earning.": "നിങ്ങളുടെ ഗാരേജ് പരിശോധിക്കാനും വരുമാനം ആരംഭിക്കാനും രേഖകൾ അപ്‌ലോഡ് ചെയ്യുക।",
+    "Your bank verification is pending.": "നിങ്ങളുടെ ബാങ്ക് പരിശോധന ബാക്കിയുണ്ട്।",
+  },
+  pa: {
+    english: "English", hindi: "हिंदी", marathi: "मराठी", bengali: "বাংলা", tamil: "தமிழ்", telugu: "తెలుగు", gujarati: "ગુજરાતી", kannada: "ಕನ್ನಡ", malayalam: "മലയാളം", punjabi: "ਪੰਜਾਬੀ",
+    dashboard: "ਡੈਸ਼ਬੋਰਡ", bookings: "ਬੁਕਿੰਗਾਂ", services: "ਸੇਵਾਵਾਂ", timeSlots: "ਸਮੇਂ ਦੇ ਸਲਾਟ", mechanics: "ਮਿਕੈਨਿਕ", earnings: "ਕਮਾਈ", reviews: "ਸਮੀਖਿਆਵਾਂ", verification: "ਪੁਸ਼ਟੀਕਰਨ", settings: "ਸੈਟਿੰਗਾਂ",
+    languagePreferences: "ਭਾਸ਼ਾ ਤਰਜੀਹਾਂ", selectLanguage: "ਆਪਣੀ ਪਸੰਦੀਦਾ ਭਾਸ਼ਾ ਚੁਣੋ", languageUpdated: "ਭਾਸ਼ਾ ਸਫਲਤਾਪੂਰਵਕ ਅਪਡੇਟ ਹੋਈ",
+    "Upload documents to verify your garage and start earning.": "ਆਪਣੇ ਗੈਰਾਜ ਦੀ ਪੁਸ਼ਟੀ ਕਰਨ ਅਤੇ ਕਮਾਈ ਸ਼ੁਰੂ ਕਰਨ ਲਈ ਦਸਤਾਵੇਜ਼ ਅਪਲੋਡ ਕਰੋ।",
+    "Your bank verification is pending.": "ਤੁਹਾਡੀ ਬੈਂਕ ਪੁਸ਼ਟੀਕਰਨ ਬਾਕੀ ਹੈ।",
   },
 };
 
