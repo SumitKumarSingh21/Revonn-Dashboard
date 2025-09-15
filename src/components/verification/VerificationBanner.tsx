@@ -6,7 +6,7 @@ import { AlertTriangle, CheckCircle, Clock, Upload, CreditCard } from 'lucide-re
 import { useNavigate } from 'react-router-dom';
 
 interface VerificationBannerProps {
-  verificationStatus: 'pending' | 'provisional' | 'verified' | 'certified';
+  verificationStatus: 'pending' | 'provisional' | 'verified' | 'certified' | 'rejected';
   badgeColor: string;
   hasDocuments: boolean;
   hasBankDetails: boolean;

@@ -19,10 +19,10 @@ interface Earning {
 
 interface GarageData {
   id: string;
-  verification_status: string;
+  verification_status: 'pending' | 'verified' | 'provisional' | 'certified' | 'rejected';
   verification_badge_color: string;
   bank_verification?: Array<{
-    status: string;
+    status: 'pending' | 'verified' | 'rejected';
     bank_name: string;
     account_holder_name: string;
   }>;
@@ -65,7 +65,17 @@ const EarningsTab = () => {
         return;
       }
 
-      setGarageData(garage);
+      // Transform bank_verification data to match interface
+      const transformedGarage = {
+        ...garage,
+        bank_verification: garage.bank_verification ? [garage.bank_verification].map(bv => ({
+          status: bv.status,
+          bank_name: bv.bank_name,
+          account_holder_name: bv.account_holder_name
+        })) : []
+      };
+
+      setGarageData(transformedGarage);
 
       if (garage.verification_status === 'pending') {
         setLoading(false);
