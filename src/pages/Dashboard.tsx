@@ -16,6 +16,7 @@ import NotificationsTab from "@/components/dashboard/NotificationsTab";
 import RevvyTab from "@/components/dashboard/RevvyTab";
 import TimeSlotManagement from "@/components/dashboard/TimeSlotManagement";
 import { VerificationTab } from "@/components/dashboard/VerificationTab";
+import SupportTab from "@/components/dashboard/SupportTab";
 import GarageProfileSetup from "@/components/dashboard/GarageProfileSetup";
 import PushNotificationSetup from "@/components/PushNotificationSetup";
 import { VerificationBanner } from "@/components/verification/VerificationBanner";
@@ -170,6 +171,9 @@ const Dashboard = () => {
             </TabsContent>
             <TabsContent value="verification">
               <VerificationTab user={user} />
+            </TabsContent>
+            <TabsContent value="support">
+              <SupportTab />
             </TabsContent>
             <TabsContent value="notifications">
               <NotificationsTab />
